@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@cljs-oss/module-deps": "^1.1.1",
+    "elliptic": "^6.5.0",
+    "ripemd160": "^2.0.2",
+    "scrypt-js": "^2.0.4",
+    "sha3": "^2.0.6",
+    "sjcl": "^1.0.8"
+  }
+}

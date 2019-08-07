@@ -1,0 +1,9 @@
+{:deps    {org.clojure/clojure       {:mvn/version "1.10.1"}
+           org.clojure/clojurescript {:mvn/version "1.10.520"}}
+ ;; setup some development paths
+ :paths   ["src" "target" "resources"]
+ ;; setup a helpful alias to start the build
+ :aliases {:cljs-dev  {:extra-deps {com.bhauman/figwheel-main       {:mvn/version "0.2.0"}
+                                    com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
+                       :main-opts  ["-m" "figwheel.main" "-b" "dev" "-r"]}
+           :build-dev {:main-opts ["-m" "figwheel.main" "-b" "dev" "-r"]}}}
