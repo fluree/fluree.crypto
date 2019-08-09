@@ -5,7 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
-                 [fluree/alphabase "3.1.3"]
+                 [fluree/alphabase "3.1.4"]
                  ;; sha3
                  [org.bouncycastle/bcprov-jdk15on "1.55"]
                  [figwheel-sidecar "0.5.18"]
@@ -13,8 +13,12 @@
                  [com.lambdaworks/scrypt "1.4.0"]
                  ;; other crypto
                  [org.bouncycastle/bcprov-jdk15on "1.55"]
+                 ;; testing in cljs
+                 ;[lein-doo "0.1.7"]
                  ]
-  :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
+  :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
+            ;[lein-doo "0.1.7"]
+            ]
   :source-paths ["src"]
   :cljsbuild {:builds
               [{:id           "dev"
@@ -25,7 +29,8 @@
                                :asset-path           "js/out"
                                :source-map-timestamp true
                                :pretty-print         false
-                               :optimize-constants   true
+                               :optimize-constants   false
+                                                     ;true
                                :static-fns           true
                                :install-deps         true
                                :npm-deps             {:sha3      "2.0.6"
@@ -43,7 +48,14 @@
                                :npm-deps      {:sha3      "2.0.6"
                                                :scrypt-js "2.0.4"}
                                :libs          ["src/goog/crypt/pkcs7.js"
-                                               "src/sjcl"]}}]}
+                                               "src/sjcl"]}}
+               ;{:id "test"
+               ;               ; :source-paths ["src" "test"]
+               ;               ; :compiler {:main runners.doo
+               ;               ;            :optimizations :none
+               ;               ;            :output-to "resources/public/cljs/all-tests.js"}}
+
+               ]}
   :repl-options {:init-ns fluree.crypto})
 
 

@@ -25,8 +25,8 @@
 
    (ripemd-160 (alphabase/string->bytes "hi"))
 
-
   (= "ad6ce46f7f1ea8519dc02ce8ce0c278c6ff329b2"
      (alphabase/bytes->hex (ripemd-160 (.getBytes "hi there!"))))
+
 
   )

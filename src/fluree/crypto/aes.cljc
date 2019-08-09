@@ -1,5 +1,6 @@
 (ns fluree.crypto.aes
-  (:require [alphabase.core :as alphabase]
+  (:require
+    [alphabase.core :as alphabase]
             [fluree.crypto.sha3 :as sha3]
             #?@(:cljs [[goog.crypt.Aes]
                        [goog.crypt.Cbc]
@@ -7,7 +8,6 @@
   #?(:clj (:import (java.security SecureRandom)
                    (javax.crypto KeyGenerator Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
-
 
 (defn hash-string-key
   "Takes a sha3-512 hash of provided string key.
@@ -34,7 +34,9 @@
                  x)
         encrypted #?(:clj
                (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     spec   (SecretKeySpec. (byte-array key-ba) "AES")
+                     ;; By default, only 128-bit encryption supported (16 bits).
+                     ;; To exceed 16 chars, need JCE Unlimited Strength
+                     spec   (SecretKeySpec. (byte-array 16 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/ENCRYPT_MODE spec iv)
                  (.doFinal cipher ba))
@@ -66,7 +68,7 @@
                  x)
         decrypt-ba #?(:clj
                (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     spec   (SecretKeySpec. (byte-array key-ba) "AES")
+                     spec   (SecretKeySpec. (byte-array 16 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/DECRYPT_MODE spec iv)
                  (.doFinal cipher x-ba))
@@ -78,15 +80,3 @@
     (case (keyword output-format)
       :none decrypt-ba
       :string (alphabase/bytes->string decrypt-ba))))
-
-
-
-(comment
-
-  (in-ns 'fluree.crypto.aes)
-
-  (encrypt "hi" "there")
-  (alphabase/bytes->string (decrypt "668cd07d1a17cc7a8a0390cf017ac7ef" "there"))
-
-  )
-

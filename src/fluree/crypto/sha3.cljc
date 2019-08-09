@@ -21,10 +21,14 @@
 (defn ^:export sha3-256
   "Create a sha3 hash"
   [ba]
-  (hash ba 256))
+  (let [ba #?(:clj ba
+              :cljs (if (string? ba) ba (alphabase.core/bytes->string ba)))]
+    (hash ba 256)))
 
 
 (defn ^:export sha3-512
   "Create a sha3 hash"
   [ba]
-  (hash ba 512))
+  (let [ba #?(:clj ba
+              :cljs (if (string? ba) ba (alphabase.core/bytes->string ba)))]
+    (hash ba 512)))

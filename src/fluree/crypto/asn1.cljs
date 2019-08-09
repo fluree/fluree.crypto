@@ -1,7 +1,6 @@
 (ns fluree.crypto.asn1
   (:require [sjcl.codec.hex :as codecHex]
-            [sjcl.codec.bytes :as codecBytes]
-            [alphabase.core :as alphabase]))
+            [sjcl.codec.bytes :as codecBytes]))
 
 
 ;; TODO - convert this library to work on bytes, and do hex conversion as needed outside here

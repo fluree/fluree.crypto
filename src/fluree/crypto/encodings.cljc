@@ -1,15 +1,17 @@
 (ns fluree.crypto.encodings
   (:require [clojure.string :as str]
-            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-                       [sjcl.ecc :as ecc]
-                       [sjcl.bn :as bn]
-                       [sjcl.codec.hex :as codecHex]
-                       [sjcl.codec.bytes :as codecBytes]]))
-  #?(:clj (:import (org.bouncycastle.asn1 ASN1Integer DERSequenceGenerator)
-                   (java.io ByteArrayOutputStream))))
+    #?@(:cljs [[fluree.crypto.asn1 :as asn1]
+               [sjcl.ecc :as ecc]
+               [sjcl.bn :as bn]
+               [sjcl.codec.hex :as codecHex]
+               [sjcl.codec.bytes :as codecBytes]])
+            [alphabase.core :as alphabase])
+  #?(:clj
+     (:import (org.bouncycastle.asn1 ASN1Integer DERSequenceGenerator ASN1InputStream)
+              (java.io ByteArrayOutputStream))))
 
 
-(defn ^:private pad-hex
+(defn ^:export pad-hex
   "Pads a hex value with a leading zero if odd."
   [hex]
   (if (odd? (count hex))
@@ -19,39 +21,53 @@
 
 ;; X92.61 encode / decode
 
-#?(:cljs
-   (defn- x962-hex-compressed-decode
-     [encoded-key]
-     (let [x       (-> encoded-key (subs 2) bn.)
-           y-even? (= (subs encoded-key 0 2) "02")]
-       (compute-point y-even? x))))
 
-#?(:cljs
-   (defn- x962-hex-uncompressed-decode
-     "Decode a hex encoded public key into x and y coordinates as bytes."
-     [encoded-key]
-     (let [size (- (count encoded-key) 2)                   ;; first hex byte is 0x04, rest is x and y coords
-           x    (subs encoded-key 2 (+ 2 size))
-           y    (subs encoded-key (+ 2 size))]
-       #js {:x (.initWith (sjcl.bn.) x)
-            :y (.initWith (sjcl.bn.) y)})))
+(defn- x962-hex-compressed-decode
+  [encoded-key curve]
+  #?(:cljs
+          (let [x       1
+                ;(-> encoded-key (subs 2) bn.)
+                y-even? (= (subs encoded-key 0 2) "02")]
+            ;(compute-point y-even? x)
+            )
+     :clj (let [point (.decodePoint (.getCurve curve) (alphabase/base-to-byte-array encoded-key :hex))
+                x     (-> point .getXCoord .toBigInteger)
+                y     (-> point .getYCoord .toBigInteger)]
+            (-> curve
+                .getCurve
+                (.createPoint x y true)
+                .normalize
+               )
+            ))
+
+  )
+
+
+(defn- x962-hex-uncompressed-decode
+  "Decode a hex encoded public key into x and y coordinates as bytes."
+  [encoded-key]
+  #?(:cljs (let [size (- (count encoded-key) 2)             ;; first hex byte is 0x04, rest is x and y coords
+                 x    (subs encoded-key 2 (+ 2 size))
+                 y    (subs encoded-key (+ 2 size))]
+             #js {:x (.initWith (sjcl.bn.) x)
+                  :y (.initWith (sjcl.bn.) y)})
+     :clj  (throw (Exception. "NOT YET IMPLEMENTED"))))
 
 
 (defn x962-decode
   "Decode a X9.62 encoded public key from hex"
-  [public-key]
+  [public-key curve]
   (assert (#{"02" "03" "04"} (subs public-key 0 2)) "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04.")
-  #?(:clj  (throw (Exception. "NEED TO IMPLEMENT"))
-     :cljs (cond
-             (#{"02" "03"} (subs public-key 0 2))
-             (x962-hex-compressed-decode public-key)
+  (cond
+    (#{"02" "03"} (subs public-key 0 2))
+    (x962-hex-compressed-decode public-key curve)
 
-             (= "04" (subs public-key 0 2))
-             (x962-hex-uncompressed-decode public-key)
+    (= "04" (subs public-key 0 2))
+    (x962-hex-uncompressed-decode public-key)
 
-             :else
-             (throw (ex-info "Invalid encoding on public key"
-                             {:encoded-key public-key})))))
+    :else
+    (throw (ex-info "Invalid encoding on public key"
+                    {:encoded-key public-key}))))
 
 
 (defn x962-encode
@@ -65,7 +81,8 @@
                              (even? y-bi))
                       :cljs (-> (sjcl.bn.)
                                 (.initWith y-coord)
-                                (bn-even?)))]
+                                ;(bn-even?)
+                                ))]
        (if y-even?
          (str "02" (pad-hex x-coord))
          (str "03" (pad-hex x-coord)))))))
@@ -75,10 +92,14 @@
 ;; DER encode / decode
 
 (defn- DER-decode-standard
-  "Decodes an ordinary encoded list of numbers from a hexadecimal following the distinguished encoding rules"
+  "Decodes an ordinary encoded list of numbers from a hexadecimal following the distinguished encoding rules. Returns R and S as bigintegers (clj). "
   [asn1]
   (assert (= "30" (subs asn1 0 2)), "Input must start with the code 30")
-  #?(:clj  (throw (Exception. "NEED TO IMPLEMENT"))
+  #?(:clj  (let [signature (alphabase/base-to-byte-array asn1 :hex)]
+             (with-open [decoder (ASN1InputStream. signature)]
+               (let [sequence (.readObject decoder)]
+                 [(-> sequence (.getObjectAt 0) .getValue)
+                  (-> sequence (.getObjectAt 1) .getValue)])))
      :cljs (let [{:keys [length remaining]} (asn1/decode-asn1-length (subs asn1 2))]
              (when-not (= (* length 2) (count remaining))
                (throw (ex-info "Decoded header length does not match actual length of message"
@@ -100,8 +121,8 @@
         first-byte (subs asn1 0 2)]
     (cond
       (#{"1b" "1c" "1d" "1e"} first-byte)                   ;; recovery bytes
-      (conj (DER-decode-standard (subs asn1 2))
-            first-byte)
+     (conj (DER-decode-standard (subs asn1 2))
+           (-> first-byte (alphabase/base-to-base :hex :biginteger)))
 
       (= "30" first-byte)
       (DER-decode-standard asn1)
@@ -109,7 +130,6 @@
       :else
       (throw (ex-info "Input must start with the code 30, or start with a recovery code (either 1b, 1c, 1d, or 1e)"
                       {:argument asn1})))))
-
 
 (defn DER-decode-ECDSA-signature
   "Formats an ECDSA signature from hex.
@@ -149,4 +169,4 @@
                  (byte-array (cons recover result)))))))
 
 
-
+;

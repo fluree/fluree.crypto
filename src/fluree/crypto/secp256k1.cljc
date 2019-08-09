@@ -2,23 +2,26 @@
   (:require [alphabase.core :as alphabase]
             [fluree.crypto.hmac :as hmac]
             [fluree.crypto.sha2 :as sha2]
+            [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
-            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-                       [sjcl.ecc :as ecc]
-                       [sjcl.bn :as bn]
-                       [sjcl.codec.hex :as codecHex]
-                       [sjcl.codec.bytes :as codecBytes]]))
-  #?(:clj (:import (java.io ByteArrayOutputStream)
-                   (java.security SecureRandom)
-                   (clojure.lang Reflector)
-                   (org.bouncycastle.crypto.generators ECKeyPairGenerator)
-                   (org.bouncycastle.crypto.params ECKeyGenerationParameters ECDomainParameters)
-                   (org.bouncycastle.asn1.sec SECNamedCurves)
-                   (org.bouncycastle.crypto.signers HMacDSAKCalculator)
-                   (org.bouncycastle.crypto.digests SHA256Digest)
-                   (org.bouncycastle.asn1 DERSequenceGenerator)
-                   (org.bouncycastle.asn1 ASN1Integer)
-                   (org.bouncycastle.math.ec ECAlgorithms))))
+    #?@(:cljs [[fluree.crypto.asn1 :as asn1]
+               [sjcl.ecc :as ecc]
+               [sjcl.bn :as bn]
+               [sjcl.codec.hex :as codecHex]
+               [sjcl.codec.bytes :as codecBytes]])
+            [fluree.crypto.ripemd :as ripemd])
+  #?(:clj
+     (:import (java.io ByteArrayOutputStream)
+              (java.security SecureRandom)
+              (clojure.lang Reflector)
+              (org.bouncycastle.crypto.generators ECKeyPairGenerator)
+              (org.bouncycastle.crypto.params ECKeyGenerationParameters ECDomainParameters)
+              (org.bouncycastle.asn1.sec SECNamedCurves)
+              (org.bouncycastle.crypto.signers HMacDSAKCalculator)
+              (org.bouncycastle.crypto.digests SHA256Digest)
+              (org.bouncycastle.asn1 DERSequenceGenerator)
+              (org.bouncycastle.asn1 ASN1Integer)
+              (org.bouncycastle.math.ec ECAlgorithms))))
 
 
 (defonce ^:private secp256k1
@@ -29,12 +32,11 @@
                                          (.getN params)
                                          (.getH params)))))
 
-
 (defn- biginteger->hex
   "Hex-encode java.math.BigInteger (clj) or sjcl.bn (cljs)."
   [bn]
   #?(:clj  (-> bn (.toString 16) encodings/pad-hex)
-     :cljs (-> bn .toString (.replace #"^0x" "") encodings/pad-hexpad-hex)))
+     :cljs (-> bn .toString (.replace #"^0x" "") encodings/pad-hex)))
 
 (defn- biginteger->bytes
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
@@ -67,6 +69,7 @@
              (.greaterEquals (.-r secp256k1) private))))
 
 
+
 #?(:cljs
    (defn- bn-even?
      "Tests is an sjcl.bn (cljs) is even. Returns boolean if so."
@@ -79,7 +82,7 @@
 
 
 (defn public-key
-  "Returns a public key from x and y coordiantes"
+  "Returns a public key from x and y coordinates"
   [x y]
 
   )
@@ -157,6 +160,15 @@
                          {:argument n,
                           :modulus  modulus}))))))
 
+(defn format-public-key
+  "Takes internal representation of a public key and returns X9.62 compressed encoded
+public key, hex encoded."
+  [public]
+  (let [x #?(:clj (-> public .getAffineXCoord .toBigInteger (.toString 16))
+             :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
+        y #?(:clj (-> public .getAffineYCoord .toBigInteger (.toString 16))
+             :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))]
+    (encodings/x962-encode x y)))
 
 (defn format-key-pair
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
@@ -174,6 +186,57 @@
     #?(:clj  pair-hex
        :cljs (clj->js pair-hex))))
 
+(defn public-key-from-private
+  [private]
+  (let [private-bn #?(:clj (cond
+                             (instance? java.math.BigInteger private) private
+                             (string? private) (BigInteger. private 16))
+                      :cljs (-> (sjcl.bn.) (.initWith private)))]
+
+    #?(:clj  (-> secp256k1 .getG (.multiply private-bn) .normalize format-public-key)
+       :cljs (.mult (.-G secp256k1) private-bn format-public-key))))
+
+
+
+
+;private-bn #?(:clj (cond
+;                              (instance? java.math.BigInteger private) private
+;                              (string? private) (BigInteger. private 16))
+
+(defn get-sin-from-public-key
+  "Generate a SIN from a public key"
+  [pub-key & {:keys [output-format]
+              :or   {output-format :base58}}]
+  #?(:clj  (let [pub-prefixed (-> pub-key
+                                  (encodings/x962-decode secp256k1)
+                                  .getEncoded
+                                  (alphabase/byte-array-to-base :bytes)
+                                  sha2/sha2-256
+                                  ripemd/ripemd-160
+                                  ;; What is this 15 and 2? Version?
+                                  (->> (concat [0x0F 0x02]))
+                                  byte-array)
+                 checksum     (-> pub-prefixed
+                                  sha2/sha2-256
+                                  sha2/sha2-256
+                                  (#(take 4 %)))]
+             (alphabase/byte-array-to-base (concat pub-prefixed checksum) output-format))
+     :cljs (throw (ex-info "NOT YET IMPLEMENTED" {}))
+     ))
+
+(comment
+  (alphabase/string->bytes "024f269661f8245a078144d1ae438abfe05e9c43d426316f529e63da8a037a2105")
+  (get-sin-from-public-key "024f269661f8245a078144d1ae438abfe05e9c43d426316f529e63da8a037a2105")
+
+  )
+
+;(defn sha256-b
+;  "alternative which takes multiple args, returns bytes"
+;  [& data]
+;  (let [d (MessageDigest/getInstance "SHA-256")]
+;    (doseq [datum data]
+;      (.update d (to-bytes datum)))
+;    (.digest d)))
 
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
@@ -306,6 +369,7 @@
     (sign-hash hash private-bn true)))
 
 
+
 (defn- compute-point
   "Compute an elliptic curve point for a y-coordinate parity and x-coordinate"
   [y-even? x-coordinate]
@@ -324,7 +388,8 @@
                       out))]
     (-> (cons (if y-even? 0x02 0x03) input)
         byte-array
-        encodings/x962-decode)))
+        alphabase/bytes->hex
+        (encodings/x962-decode secp256k1))))
 
 
 (defn ecrecover
@@ -347,7 +412,7 @@
         is-second-key?  (odd? (-> recovery-byte
                                   (- 0x1B)
                                   (bit-shift-right 1)))
-        n #?(:clj       (.-r secp256k1) :cljs (.getN secp256k1))
+        n #?(:clj       (.getN secp256k1) :cljs (.getN secp256k1))
         R               (compute-point y-even? (if is-second-key? (.add r n) r))
         r-inv           (.modInverse r n)
         hash-bi #?(:clj (BigInteger. 1 hash) :cljs (bytes->biginteger hash))
@@ -361,9 +426,11 @@
 (defn recover-public-key-from-hash
   "Recover a public key from a hash byte-array and signature (hex)."
   [hash signature]
-  (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)]
-    (ecrecover hash recover R S)))
-
+  (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
+        recover  (int recover)]
+    (-> (ecrecover hash recover R S)
+        .normalize
+        format-public-key)))
 
 (defn recover-public-key
   "Recover a public key from original message and signature (hex) of the
@@ -372,26 +439,34 @@
   (let [hash (sha2/sha2-256 (alphabase/string->bytes input))]
     (recover-public-key-from-hash hash signature)))
 
+#?(:clj (defn verify-signature-from-hash
+          [key hash signature]
+          (let [[head1 head2] (take 2 signature)]
+            (cond (and (#{0x1B 0x1C 0x1D 0x1E} head1) (= head2 0x30))
+                  (= key
+                     (recover-public-key-from-hash hash (alphabase/bytes->hex signature)))
 
-;(defn ^:export verify
-;  "Verifies a message given a signature.
-;  Assumes signature is DER-encoded with a recovery byte."
-;  [message signature]
-;  #?(:clj (defn verify-signature
-;            "Verifies that the SHA256 hash of a string of data has been signed"
-;            [key data signature & {:keys [input-format public-key-format]
-;                                   :or   {input-format      :hex
-;                                          public-key-format :hex}}]
-;            (verify-signature-from-hash
-;              (public-key key input-format)
-;              (byte-array-to-base (sha256 data) :bytes)
-;              (base-to-base signature input-format :bytes)
-;              :input-format :bytes
-;              :public-key-format public-key-format))
-;     :cljs)
-;  )
-;
-;
+                  ;(= head1 0x30)
+                  ;(verify-ECDSA-signature-from-hash pub-key input sig-bytes)
+
+                  :else
+                  (throw (ex-info "Unknown signature header"
+                                  {:key       key
+                                   :hash      hash
+                                   :signature signature}))))))
+
+
+(defn ^:export verify
+  "Verifies a message given a signature.
+  Assumes signature is DER-encoded with a recovery byte."
+  [message signature]
+  #?(:clj (let [pubkey (recover-public-key message signature)
+                hash (sha2/sha2-256 (alphabase/string->bytes message))
+                sig-bytes (alphabase/base-to-byte-array signature :hex)]
+            (verify-signature-from-hash pubkey hash sig-bytes))
+     :cljs (throw (ex-info "NOT YET IMPLEMENTED" {}))))
+
+
 
 
 
@@ -399,7 +474,23 @@
 
 (comment
 
+  (verify "hi9" "1c3045022100f2387abf0e12199bda0773684ed5542b8aa2cff7ae5453a38a0338e99807f1a902206b1e978705d494582a17ecc5388760d2b391a2b7d499a4a3e404cdf0a8637c96"
+          )
+
+  (def sig "1c3045022100f2387abf0e12199bda0773684ed5542b8aa2cff7ae5453a38a0338e99807f1a902206b1e978705d494582a17ecc5388760d2b391a2b7d499a4a3e404cdf0a8637c96")
+
+
+  (def sig-bytes (alphabase/base-to-byte-array sig :hex))
+
+  sig-bytes
+
+  (take 2 sig-bytes)
+
+
+
   (in-ns 'fluree.crypto.secp256k1)
+
+
 
 
 
