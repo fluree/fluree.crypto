@@ -9,7 +9,8 @@
                [sjcl.bn :as bn]
                [sjcl.codec.hex :as codecHex]
                [sjcl.codec.bytes :as codecBytes]])
-            [fluree.crypto.ripemd :as ripemd])
+            [fluree.crypto.ripemd :as ripemd]
+            )
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
               (java.security SecureRandom)
@@ -32,32 +33,6 @@
                                          (.getN params)
                                          (.getH params)))))
 
-(defn- biginteger->hex
-  "Hex-encode java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  [bn]
-  #?(:clj  (-> bn (.toString 16) encodings/pad-hex)
-     :cljs (-> bn .toString (.replace #"^0x" "") encodings/pad-hex)))
-
-(defn- biginteger->bytes
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  ([bn] (biginteger->bytes bn nil))
-  ([bn l]
-    #?(:clj  (-> bn .toByteArray)
-       :cljs (-> bn (.toBits l) codecBytes/fromBits))))
-
-(defn- bytes->biginteger
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  [ba]
-  #?(:clj  (BigInteger. ba)
-     :cljs (-> ba codecBytes/toBits bn/fromBits)))
-
-(defn- hex->biginteger
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  [hex]
-  #?(:clj  (BigInteger. hex 16)
-     :cljs (.initWith (sjcl.bn.) hex)))
-
-
 (defn valid-private?
   "Returns true if private key, as big number/integer, is valid.
   Private key must be >= 1 and <= curve modulus."
@@ -67,98 +42,6 @@
      :cljs (and
              (.greaterEquals private 1)
              (.greaterEquals (.-r secp256k1) private))))
-
-
-
-#?(:cljs
-   (defn- bn-even?
-     "Tests is an sjcl.bn (cljs) is even. Returns boolean if so."
-     [sjcl-bn]
-     (-> sjcl-bn
-         .-limbs                                            ;; .limbs holds array of numbers
-         (get 0)                                            ;; first array number is lowest bits
-         (bit-and 1)
-         (zero?))))
-
-
-(defn public-key
-  "Returns a public key from x and y coordinates"
-  [x y]
-
-  )
-
-
-
-;; adapted from https://github.com/Sepia-Officinalis/secp256k1
-#?(:cljs
-   (defn modular-square-root
-     "Compute the square root of a number modulo a prime.
-     Number and modulus should be big numbers (bn)."
-     [n modulus]
-     (let [n    (.mod n modulus)
-           mod8 (-> modulus (.mod 8) .toString js/parseInt)]
-       (assert (.greaterEquals modulus 0), "Modulus must be non-negative")
-       (cond
-         (.equals n 0) n
-
-         (.equals n 1) n
-
-         ;; http://www.mersennewiki.org/index.php/Modular_Square_Root#Modulus_equal_to_2
-         (.equals modulus 2)
-         (.mod n modulus)
-
-         ;; http://www.mersennewiki.org/index.php/Modular_Square_Root#Modulus_congruent_to_3_modulo_4
-         (or (= mod8 3) (= mod8 7))
-         (let [m (-> modulus (.add 1) .normalize .halveM .halveM)]
-           (.powermod n m modulus))
-
-         ;; http://www.mersennewiki.org/index.php/Modular_Square_Root#Modulus_congruent_to_5_modulo_8
-         (= mod8 5)
-         (let [m (-> modulus (.sub 5) .normalize .halveM .halveM .halveM)
-               v (.powermod (.add n n) m modulus)
-               i (-> (.multiply v v) (.multiply n) (.multiply 2) (.sub 1) (.mod modulus))]
-           (-> n (.multiply v) (.multiply i) (.mod modulus)))
-
-         ;; http://www.mersennewiki.org/index.php/Modular_Square_Root#Modulus_congruent_to_1_modulo_8
-         (= mod8 1)
-         (let [q   (-> modulus (.sub 1) .normalize)
-               e   (->> q
-                        (iterate #(.halveM %))
-                        (take-while even?)
-                        count)
-               two (sjcl.bn. 2)
-               z   (->> (range) rest rest
-                        (map #(sjcl.bn. %))
-                        (map #(.powermod % q modulus))
-                        (filter
-                          #(not
-                             (.equals
-                               (.powermod % (.pow two (- e 1)) modulus)
-                               1)))
-                        first)
-               x   (.powermod n (-> q (.sub 1) .normalize .halveM) modulus)]
-           (loop [y z,
-                  r e,
-                  v (-> n (.multiply x) (.mod modulus)),
-                  w (-> n (.multiply x) (.multiply x) (.mod modulus))]
-             (if (.equals w 1)
-               v
-               (let [k (->> (range)
-                            (map #(vector
-                                    %
-                                    (.powermod w (.pow two %) modulus)))
-                            (filter #(.equals (second %) 1))
-                            first first)
-                     d (.powermod y (.pow two (- r k 1)) modulus)
-                     y (.mod (.multiply d d) modulus)
-                     v (.mod (.multiply d v) modulus)
-                     w (.mod (.multiply w y) modulus)]
-                 (recur y k v w)))))
-
-         :else
-         (throw (ex-info "Cannot compute a square root for a non-prime modulus"
-                         {:argument n,
-                          :modulus  modulus}))))))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -180,7 +63,7 @@ public key, hex encoded."
              :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
              :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))
-        pair-hex        {:private (biginteger->hex private)
+        pair-hex        {:private (encodings/biginteger->hex private)
                          :public  (encodings/x962-encode x y)}]
 
     #?(:clj  pair-hex
@@ -192,16 +75,14 @@ public key, hex encoded."
                              (instance? java.math.BigInteger private) private
                              (string? private) (BigInteger. private 16))
                       :cljs (-> (sjcl.bn.) (.initWith private)))]
+    (when-not (valid-private? private-bn)
+      (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {})))
+    #?(:clj  {:private private-bn
+              :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
+       :cljs #js {:private private-bn
+                  :public  (.mult (.-G secp256k1) private-bn)})))
 
-    #?(:clj  (-> secp256k1 .getG (.multiply private-bn) .normalize format-public-key)
-       :cljs (.mult (.-G secp256k1) private-bn format-public-key))))
 
-
-
-
-;private-bn #?(:clj (cond
-;                              (instance? java.math.BigInteger private) private
-;                              (string? private) (BigInteger. private 16))
 
 (defn get-sin-from-public-key
   "Generate a SIN from a public key"
@@ -213,7 +94,7 @@ public key, hex encoded."
                                   (alphabase/byte-array-to-base :bytes)
                                   sha2/sha2-256
                                   ripemd/ripemd-160
-                                  ;; What is this 15 and 2? Version?
+                                  ;;; What is this 15 and 2? Version?
                                   (->> (concat [0x0F 0x02]))
                                   byte-array)
                  checksum     (-> pub-prefixed
@@ -221,14 +102,18 @@ public key, hex encoded."
                                   sha2/sha2-256
                                   (#(take 4 %)))]
              (alphabase/byte-array-to-base (concat pub-prefixed checksum) output-format))
-     :cljs (throw (ex-info "NOT YET IMPLEMENTED" {}))
-     ))
-
-(comment
-  (alphabase/string->bytes "024f269661f8245a078144d1ae438abfe05e9c43d426316f529e63da8a037a2105")
-  (get-sin-from-public-key "024f269661f8245a078144d1ae438abfe05e9c43d426316f529e63da8a037a2105")
-
-  )
+     :cljs (let [pub-prefixed (-> pub-key
+                                  alphabase/hex->bytes
+                                  sha2/sha2-256
+                                  ripemd/ripemd-160
+                                  (->> (concat [0x0F 0x02]))
+                                  clj->js)
+                 checksum     (-> pub-prefixed
+                                  sha2/sha2-256
+                                  sha2/sha2-256
+                                  (#(take 4 %))
+                                  clj->js)]
+             (alphabase/bytes->base58 (-> (concat pub-prefixed checksum) clj->js)))))
 
 ;(defn sha256-b
 ;  "alternative which takes multiple args, returns bytes"
@@ -255,17 +140,7 @@ public key, hex encoded."
                               (bn/fromBits)))]
      (generate-key-pair* private)))
   ([private]
-   (let [private-bn #?(:clj (cond
-                              (instance? java.math.BigInteger private) private
-                              (string? private) (BigInteger. private 16))
-                       :cljs (-> (sjcl.bn.) (.initWith private)))]
-     (when-not (valid-private? private-bn)
-       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {})))
-     #?(:clj  {:private private-bn
-               :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
-        :cljs #js {:private private-bn
-                   :public  (.mult (.-G secp256k1) private-bn)}))))
-
+   (public-key-from-private private)))
 
 (defn ^:export generate-key-pair
   "Returns key pair in hex format using X9.62 compressed encoding for public key."
@@ -287,7 +162,7 @@ public key, hex encoded."
                  curve-bytes  (/ l 8)
                  v            (repeat curve-bytes 0x01)
                  k            (repeat curve-bytes 0x00)
-                 pk           (biginteger->bytes priv-key)
+                 pk           (encodings/biginteger->bytes priv-key)
                  left-padding (repeat (- curve-bytes (count hash-ba)) 0)
                  hash         (concat left-padding hash-ba)
                  k            (hmac/hmac-sha256 (concat v [0] pk hash) k)
@@ -297,7 +172,7 @@ public key, hex encoded."
              (assert (= (count hash) curve-bytes)
                      "Hash should have the same number of bytes as the curve modulus")
              (-> (hmac/hmac-sha256 v k)
-                 bytes->biginteger))))
+                 encodings/bytes->biginteger))))
 
 
 (defn- compute-recovery-byte
@@ -315,7 +190,7 @@ public key, hex encoded."
      :cljs (let [n      (.-r secp256k1)
                  big-r? (.greaterEquals r n)
                  big-s? (.greaterEquals (.add s s) n)
-                 y-odd? (-> kp .-y bn-even? not)]
+                 y-odd? (-> kp .-y encodings/bn-even? not)]
              (-> 0x1B
                  (+ (if (not= big-s? y-odd?) 1 0))
                  (+ (if big-r? 2 0))))))
@@ -351,7 +226,9 @@ public key, hex encoded."
                                         s_)]
                                [r s s_ kp]))
         recovery-byte (when recovery-byte? (compute-recovery-byte kp r s_))]
-    (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)))
+    (-> (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)
+        alphabase/bytes->hex)))
+
 
 
 (defn ^:export sign
@@ -363,34 +240,10 @@ public key, hex encoded."
                      (alphabase/string->bytes message)
                      message)
         private-bn (if (string? private-key)
-                     (hex->biginteger private-key)
+                     (encodings/hex->biginteger private-key)
                      private-key)
         hash       (sha2/sha2-256 msg-ba)]
     (sign-hash hash private-bn true)))
-
-
-
-(defn- compute-point
-  "Compute an elliptic curve point for a y-coordinate parity and x-coordinate"
-  [y-even? x-coordinate]
-  (let [raw   (->> x-coordinate
-                   biginteger
-                   .toByteArray)
-        l     (-> secp256k1 .getN .bitLength (/ 8))
-        input (cond (= l (count raw)) raw
-                    (< l (count raw)) (drop-while zero? raw)
-                    (> l (count raw))
-                    (let [out (byte-array l)]
-                      (System/arraycopy
-                        raw 0
-                        out (- l (count raw))
-                        (count raw))
-                      out))]
-    (-> (cons (if y-even? 0x02 0x03) input)
-        byte-array
-        alphabase/bytes->hex
-        (encodings/x962-decode secp256k1))))
-
 
 (defn ecrecover
   "Given the components of a signature and a recovery value,
@@ -404,33 +257,42 @@ public key, hex encoded."
                (<= recovery-byte 0x1E))
           (str "Recovery byte should be between 0x1B and 0x1E. Provided: "
                #?(:cljs (.toString recovery-byte 16) :clj (format "%x" recovery-byte))))
-  (let [l #?(:clj       (-> secp256k1 .getN .bitLength (/ 8))
+  (let [l #?(:clj             (-> secp256k1 .getN .bitLength (/ 8))
              :cljs (-> secp256k1 .-r .bitLength (/ 8)))
-        _               (assert (= l (count hash))
-                                (str "Hash should have " l " bytes, but had " (count hash) "."))
-        y-even?         (even? (- recovery-byte 0x1B))
-        is-second-key?  (odd? (-> recovery-byte
-                                  (- 0x1B)
-                                  (bit-shift-right 1)))
-        n #?(:clj       (.getN secp256k1) :cljs (.getN secp256k1))
-        R               (compute-point y-even? (if is-second-key? (.add r n) r))
-        r-inv           (.modInverse r n)
-        hash-bi #?(:clj (BigInteger. 1 hash) :cljs (bytes->biginteger hash))
-        e-inv #?(:clj   (.subtract n hash-bi)
+        _                     (assert (= l (count hash))
+                                      (str "Hash should have " l " bytes, but had " (count hash) "."))
+        y-even?               (even? (- recovery-byte 0x1B))
+        is-second-key?        (odd? (-> recovery-byte
+                                        (- 0x1B)
+                                        (bit-shift-right 1)))
+        n #?(:clj             (.getN secp256k1) :cljs (.-r secp256k1))
+        point                 (encodings/compute-point y-even? (if is-second-key? (.add r n) r) secp256k1)
+        R #?(:cljs point :clj (encodings/x962-decode point secp256k1))
+        r-inv #?(:clj         (.modInverse r n) :cljs (.inverseMod r n))
+        hash-bi #?(:clj       (BigInteger. 1 hash) :cljs (encodings/bytes->biginteger hash))
+        e-inv #?(:clj         (.subtract n hash-bi)
                  :cljs (.sub n hash-bi))]
-    (-> #?(:clj  (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
-           :cljs (.mult e-inv (.-G secp256k1) s R))
-        (.multiply r-inv))))
+    #?(:clj (-> (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
+                (.multiply r-inv) .normalize format-public-key)
+       :cljs
+
+            (let [g-point  (ecc/point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+                  r-point  (ecc/point. secp256k1 (.-x R) (.-y R))
+                  sumOTM   (.mult2 r-point s e-inv g-point)
+                  sumPoint (ecc/point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
+              (-> (.mult sumPoint r-inv)
+                  format-public-key)))))
 
 
 (defn recover-public-key-from-hash
   "Recover a public key from a hash byte-array and signature (hex)."
   [hash signature]
   (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
-        recover  (int recover)]
-    (-> (ecrecover hash recover R S)
-        .normalize
-        format-public-key)))
+        recover   (int recover)
+        recovered (ecrecover hash recover R S)]
+    recovered))
+
+
 
 (defn recover-public-key
   "Recover a public key from original message and signature (hex) of the
@@ -439,103 +301,41 @@ public key, hex encoded."
   (let [hash (sha2/sha2-256 (alphabase/string->bytes input))]
     (recover-public-key-from-hash hash signature)))
 
-#?(:clj (defn verify-signature-from-hash
-          [key hash signature]
-          (let [[head1 head2] (take 2 signature)]
-            (cond (and (#{0x1B 0x1C 0x1D 0x1E} head1) (= head2 0x30))
-                  (= key
-                     (recover-public-key-from-hash hash (alphabase/bytes->hex signature)))
 
-                  ;(= head1 0x30)
-                  ;(verify-ECDSA-signature-from-hash pub-key input sig-bytes)
 
-                  :else
-                  (throw (ex-info "Unknown signature header"
-                                  {:key       key
-                                   :hash      hash
-                                   :signature signature}))))))
+(defn verify-signature-from-hash
+  [key hash signature]
+  (let [head1 (subs signature 0 2)
+        head2 (subs signature 2 4)]
+    (cond (and (#{"1b" "1c" "1d" "1e"} head1) (= "30" head2))
+          (= key
+             (recover-public-key-from-hash hash signature))
+
+          ;(= head1 0x30)
+          ;(verify-ECDSA-signature-from-hash pub-key input sig-bytes)
+
+          :else
+          (throw (ex-info "Unknown signature header"
+                          {:key       key
+                           :hash      hash
+                           :signature signature})))))
 
 
 (defn ^:export verify
-  "Verifies a message given a signature.
+  "Verifies a message given a signature (in hex).
   Assumes signature is DER-encoded with a recovery byte."
-  [message signature]
-  #?(:clj (let [pubkey (recover-public-key message signature)
-                hash (sha2/sha2-256 (alphabase/string->bytes message))
-                sig-bytes (alphabase/base-to-byte-array signature :hex)]
-            (verify-signature-from-hash pubkey hash sig-bytes))
-     :cljs (throw (ex-info "NOT YET IMPLEMENTED" {}))))
-
-
-
-
-
+  [pub-key message signature]
+  (let [hash      (sha2/sha2-256 (alphabase/string->bytes message))]
+    (verify-signature-from-hash pub-key hash signature)))
 
 
 (comment
 
-  (verify "hi9" "1c3045022100f2387abf0e12199bda0773684ed5542b8aa2cff7ae5453a38a0338e99807f1a902206b1e978705d494582a17ecc5388760d2b391a2b7d499a4a3e404cdf0a8637c96"
-          )
-
-  (def sig "1c3045022100f2387abf0e12199bda0773684ed5542b8aa2cff7ae5453a38a0338e99807f1a902206b1e978705d494582a17ecc5388760d2b391a2b7d499a4a3e404cdf0a8637c96")
-
-
-  (def sig-bytes (alphabase/base-to-byte-array sig :hex))
-
-  sig-bytes
-
-  (take 2 sig-bytes)
+  (verify "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5" "hi" "1c3045022100e81841ed32ed8c36e31dfa671cb21c1d9bdd6b581ea699b62d4201445e3fe2ea02200473ef2d72258029dae899ece3846c5e06190ce27ca3f289bf8a5cf43ef02c68")
 
 
 
-  (in-ns 'fluree.crypto.secp256k1)
-
-
-
-
-
-  (def kp (generate-key-pair))
-  kp
-
-
-  (sign "hi" (.-private kp))
-
-  (-> (sign "hi" (:private kp))
-      (alphabase/bytes->hex))
-
-  (-> (sign "hi" (.-private kp))
-      #_(alphabase/bytes->hex))
-
-  (byte 28)
-
-  (cons (byte 28) (.getBytes "hi there Brian how are you"))
-
-
-
-  (deterministic-generate-k (hmac/hmac-sha256 (alphabase/string->bytes "hi") (alphabase/string->bytes "there"))
-                            (.initWith (sjcl.bn.) "0893fd137937bb72a27d926c20616b051e2a68b367c1f13fd0e8ae41ece1a325")
-                            secp256k1)
-
-
-  (let [hash-ba      (hmac/hmac-sha256 (alphabase/string->bytes "hi") (alphabase/string->bytes "there"))
-        priv-key     (.initWith (sjcl.bn.) "0893fd137937bb72a27d926c20616b051e2a68b367c1f13fd0e8ae41ece1a325")
-        pk           (biginteger->bytes priv-key)
-        curve        secp256k1
-        l            (-> curve .-r .bitLength)
-        curve-bytes  (/ l 8)
-        v            (repeat curve-bytes 0x01)
-        k            (repeat curve-bytes 0x00)
-        left-padding (repeat (- curve-bytes (count hash-ba)) 0)
-        hash         (concat left-padding hash-ba)
-        k            (hmac/hmac-sha256 (concat v [0] pk hash) k)
-        v            (hmac/hmac-sha256 v k)
-        k            (hmac/hmac-sha256 (concat v [1] pk hash) k)
-        v            (hmac/hmac-sha256 v k)]
-    v
-
-    )
-
-  (-> (generate-key-pair "0893fd137937bb72a27d926c20616b051e2a68b367c1f13fd0e8ae41ece1a325"))
-
+ (subs "1b3045022100ce83b3c04ba99489c7319dbda792e356fb3d0248466c4147c4f79d23def591320220314e76cc5d5f760a2fcebb1fecf216d1bf65a92644522ea3973743531d21f156" 2 4)
   )
+
 

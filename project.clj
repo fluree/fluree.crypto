@@ -19,6 +19,7 @@
   :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
             ;[lein-doo "0.1.7"]
             ]
+
   :source-paths ["src"]
   :cljsbuild {:builds
               [{:id           "dev"
@@ -29,9 +30,8 @@
                                :asset-path           "js/out"
                                :source-map-timestamp true
                                :pretty-print         false
-                               :optimize-constants   false
-                                                     ;true
-                               :static-fns           true
+                               :optimize-constants false
+                               :static-fns true
                                :install-deps         true
                                :npm-deps             {:sha3      "2.0.6"
                                                       :scrypt-js "2.0.4"}

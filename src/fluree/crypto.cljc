@@ -3,12 +3,10 @@
     [fluree.crypto.sha2 :as sha2]
     [fluree.crypto.sha3 :as sha3]
     [fluree.crypto.aes :as aes]
-    [fluree.crypto.scrypt :as scrypt]
     [fluree.crypto.ripemd :as ripemd]
     [fluree.crypto.secp256k1 :as secp256k1]
-    [fluree.crypto.hmac :as hmac]
-    [alphabase.core :as alphabase]
-    [fluree.crypto.encodings :as encodings])
+    #?@(:cljs [[goog.crypt :as gcrypt]])
+    [alphabase.core :as alphabase])
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
@@ -59,7 +57,6 @@
        normalize-string
        (sha2-256 output-format :string))))
 
-
 (defn ^:export sha2-512
   ([x] (sha2-512 x :hex))
   ([x output-format] (sha2-512 x output-format (coerce-input-format x)))
@@ -68,7 +65,6 @@
        (alphabase/base-to-byte-array input-format)
        sha2/sha2-512
        (alphabase/byte-array-to-base (keyword output-format)))))
-
 
 (defn ^:export sha2-512-normalize
   "sha2-512 hash of provided string after normalizing string."
@@ -126,12 +122,20 @@
        ripemd/ripemd-160
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-
 (defn ^:export aes-encrypt
   ([x key] (aes-encrypt x key :hex :string))
   ([x key output-format] (aes-encrypt x key output-format :string))
   ([x key output-format input-format]
    (aes/encrypt x key)))
+
+(defn ^:export aes-encrypt-normalize
+  ([x key] (aes-encrypt-normalize x key :hex :string))
+  ([x key output-format] (aes-encrypt-normalize x key output-format :string))
+  ([x key output-format input-format]
+   (if (= :string input-format)
+     (-> (normalize-string x)
+         (aes-encrypt key))
+     (aes-encrypt x key))))
 
 (defn ^:export aes-decrypt
   ([x key] (aes-decrypt x key :string :hex))
@@ -144,101 +148,137 @@
   ([private]
    (secp256k1/generate-key-pair private)))
 
+
 (defn ^:export pub-key-from-private
   "Take a private key as either a hex string or BigInteger (clj) bignumber (cljs), returns as a hex string."
   [private-key]
-  (secp256k1/public-key-from-private private-key))
+  (-> (secp256k1/public-key-from-private private-key)
+      secp256k1/format-key-pair
+      #?(:clj  :public
+         :cljs .-public)))
 
 (defn ^:export account-id-from-private
   [private-key]
   (-> private-key
       pub-key-from-private
-      ;; TODO - implement get-sin-from-public-key working in cljs
       secp256k1/get-sin-from-public-key))
 
 (defn ^:export account-id-from-public
   [public-key]
   (-> public-key
-      ;; TODO - implement get-sin-from-public-key working in cljs
       secp256k1/get-sin-from-public-key))
 
 
-#?(:clj
-   (defn sign-message
-     "Sign some message with provided private key.\n  Message must be a byte-array or string.\n  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs)."
-     [message private-key]
-     (-> (secp256k1/sign message private-key)
-         alphabase/bytes->hex)))
+(defn ^:export sign-message
+  "Sign some message with provided private key.\n  Message must be a byte-array or string.\n  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs)."
+  [message private-key]
+  (secp256k1/sign message private-key))
 
-#?(:clj
-   (defn verify-signature
-     "Verifies signature of message is valid."
-     [message signature]
-     (secp256k1/verify message signature)))
+(defn ^:export verify-signature
+  "Verifies signature of message is valid."
+  [pub-key message signature]
+  (secp256k1/verify pub-key message signature))
 
+(defn ^:export pub-key-from-message
+  "Returns public key, and verifies message is correctly signed.
+  If not correctly signed, throws exception."
+  [message signature]
+  (secp256k1/recover-public-key message signature))
 
-#?(:clj
-   (defn pub-key-from-message
-     "Returns public key, and verifies message is correctly signed.
-     If not correctly signed, throws exception."
-     [message signature]
-     (let [pubkey (secp256k1/recover-public-key message signature)]
-       (if (verify-signature message signature)
-         pubkey
-         (throw (ex-info (str "Invalid signature.")
-                         {:status 400 :error :db/invalid-signature}))))))
-
-
-#?(:clj
-   (defn account-id-from-message
-     "Given a message and signature, returns the corresponding account id
-     only if the signature is valid. If invalid, will throw exception."
-     [message signature]
-     (-> (pub-key-from-message message signature)
-          account-id-from-public)))
-
-
-
-
+(defn ^:export account-id-from-message
+  "Given a message and signature, returns the corresponding account id
+  only if the signature is valid. If invalid, will throw exception."
+  [message signature]
+  (-> (pub-key-from-message message signature)
+      account-id-from-public))
 
 
 (comment
 
-
-  (pub-key-from-message "hi!"
-                        "1b3045022100edc40558a209afea4e7c8ee1c3667a9fab554d4ebfdb692fe27dc69f071e9732022049ee4b25012d3f76ec20e8940f36a742d6d355ee76fa984660c98c4e09fa41ba")
-
-  (account-id-from-message "hi!"
-                           "1b3045022100edc40558a209afea4e7c8ee1c3667a9fab554d4ebfdb692fe27dc69f071e9732022049ee4b25012d3f76ec20e8940f36a742d6d355ee76fa984660c98c4e09fa41ba")
-
-
-   (sign-message "hi" private)
-
-  (sign-message "hi" private)
-
-
-  (account-id-from-private (:private kp))
   (def kp (generate-key-pair))
-  (def public (:public kp))
-  (def private (:private kp))
 
-
-
-  (account-id-from-private private)
-  (account-id-from-public public)
-
-  (aes-encrypt "hi" private)
-
-  (-> (aes-encrypt "hi" private)
-      (aes-decrypt private))
+  (def private #?(:cljs (.-private kp) :clj  (:private kp)))
+  (def public #?(:cljs (.-public kp) :clj  (:public kp)))
 
   (= public (pub-key-from-private private))
 
-  public
+  (sha2-256 "hi there")
+  ; CLJS + CLJ:
+  ; "9b96a1fe1d548cbbc960cc6a0286668fd74a763667b06366fb2324269fcabaa4"
 
-  (alphabase/bytes->string (account-id-from-private private))
+  (sha2-256-normalize (str "\u0041\u030a" "pple"))
+  (sha2-256-normalize (str "\u00C5" "pple"))
+  ; CLJS + CLJ
+  ; For both: "58acf888b520fe51ecc0e4e5eef46c3bea3ca7df4c11f6719a1c2471bbe478bf"
 
-  (sign-message "hi" private)
 
-  (secp256k1/recover-public-key "hi" (sign-message "hi" private))
+  (sha2-512 "hi there")
+  ; CLJS + CLJ:
+  ; "db5227a40901a06d455f7666be017c6abbbafdfb3327f4a996d375c3fd020a2bfe464b7cee18caa5d23edf308b76ae623dc8b2b0cec98dc96219ad741b67f5bd"
+
+  (sha2-512-normalize (str "\u00C5" "pple"))
+  (sha2-512-normalize (str "\u0041\u030a" "pple"))
+  ; CLJS + CLJ ->
+  ; For both: "6c406d5e0a5910aeee9adf14425427aa864d55e3dce675eae68d4ad5d6d560199667ac6c8186091f83041f4c8708573881d93ba0e47717bf491a06820a84efef"
+
+  (sha3-256 "hi there")
+  ; CLJS + CLJ:
+  ; "f721a1afff8300e03f24a45d337b9a9aa630ca8b7f2b8dca94b44be78e554fa5"
+
+  (sha3-256-normalize (str "\u0041\u030a" "pple"))
+  (sha3-256-normalize (str "\u00C5" "pple"))
+  ; CLJS + CLJ:
+  ; For both: "56ccd25281a278146afa6770378d0c6949959adb84ad1c688951b7bb4af22401"
+
+  (sha3-512 "hi there")
+  ; CLJS + CLJ:
+  ; "4297c279eb3c3ffa693cb856ecdb916a1ad8398cc79b5f7f8420684d77e0a153b96a5e3fe48438bc66f5a56efb25eef5927cb396a4313a38d503d09734154467"
+
+  (sha3-512-normalize (str "\u0041\u030a" "pple"))
+  (sha3-512-normalize (str "\u00C5" "pple"))
+  ;  CLJS + CLJ:
+  ; For both:
+  ; "085fb750a248ee4206d9255a2082ae5b17b9582f0fd856e75257fec427d329c91ebb67b9c3b49a713aa2a14595bf094f78de2d359b38903bae2388beb49f206d"
+
+
+  (ripemd-160 "hi there")
+  ; CLJS + CLJ:
+  ; 6bbf1bb4ef616c675347ca0044f3997fc8ca3921
+
+
+  (aes-encrypt "hi" "there")
+  ;; CLJ + CLJS
+  ;; 668cd07d1a17cc7a8a0390cf017ac7ef
+
+  (aes-decrypt (aes-encrypt "hi" "there") "there")
+  (aes-decrypt "668cd07d1a17cc7a8a0390cf017ac7ef" "there")
+  ;; Working in CLJS + CLJ
+
+  (aes-encrypt-normalize (str "\u0041\u030a" "pple") "there")
+  (aes-encrypt-normalize (str "\u00C5" "pple") "there")
+  (aes-decrypt (aes-encrypt-normalize (str "\u00C5" "pple") "there") "there")
+  ;; CLJ + CLJS
+  (aes-encrypt-normalize (str "\u00C5" "pple") "there")
+  ;ead3c7632061dd6835477d12ea51f85b
+
+  (def account-id (account-id-from-private private))
+  ;; CLJ + CLJS
+
+  (account-id-from-public public)
+  ;; CLJ + CLJS
+
+  (def sig (sign-message "hi" private))
+
+  (verify-signature public "hi" sig)
+  ;; CLJ + CLJS
+
+  (= public (pub-key-from-message "hi" sig))
+  ; CLJ + CLJS
+
+  (= account-id (account-id-from-message "hi" sig))
+  ;; CLJ + CLJS
+
   )
+
+
+

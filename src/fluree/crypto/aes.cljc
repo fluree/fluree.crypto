@@ -9,6 +9,8 @@
                    (javax.crypto KeyGenerator Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
 
+
+;; This is assuming 256 bit encryption.
 (defn hash-string-key
   "Takes a sha3-512 hash of provided string key.
   We only need first 32 bytes."
@@ -33,10 +35,8 @@
                  (alphabase/string->bytes x)
                  x)
         encrypted #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     ;; By default, only 128-bit encryption supported (16 bits).
-                     ;; To exceed 16 chars, need JCE Unlimited Strength
-                     spec   (SecretKeySpec. (byte-array 16 key-ba) "AES")
+               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv )))
+                     spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/ENCRYPT_MODE spec iv)
                  (.doFinal cipher ba))
@@ -49,6 +49,7 @@
       :none encrypted
       :hex (alphabase/bytes->hex encrypted)
       :base64 (alphabase/bytes->base64 encrypted))))
+
 
 
 (defn ^:export decrypt
@@ -67,8 +68,8 @@
                    :base64 (alphabase/base64->bytes x))
                  x)
         decrypt-ba #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     spec   (SecretKeySpec. (byte-array 16 key-ba) "AES")
+               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv )))
+                     spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/DECRYPT_MODE spec iv)
                  (.doFinal cipher x-ba))
