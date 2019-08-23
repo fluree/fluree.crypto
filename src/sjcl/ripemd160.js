@@ -1,4 +1,4 @@
-/** @fileOverview Javascript RIPEMD-160 implementation.
+/** fileOverview Javascript RIPEMD-160 implementation.
  *
  * @author Artem S Vybornov <vybornov@gmail.com>
  */

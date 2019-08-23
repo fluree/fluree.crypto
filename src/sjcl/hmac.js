@@ -1,4 +1,4 @@
-/** @fileOverview HMAC implementation.
+/** fileOverview HMAC implementation.
  *
  * @author Emily Stark
  * @author Mike Hamburg

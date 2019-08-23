@@ -1,4 +1,4 @@
-/** @fileOverview Random number generator.
+/** fileOverview Random number generator.
  *
  * @author Emily Stark
  * @author Mike Hamburg

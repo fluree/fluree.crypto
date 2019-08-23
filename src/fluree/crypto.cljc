@@ -3,6 +3,7 @@
     [fluree.crypto.sha2 :as sha2]
     [fluree.crypto.sha3 :as sha3]
     [fluree.crypto.aes :as aes]
+    [fluree.crypto.scrypt :as scrypt]
     [fluree.crypto.ripemd :as ripemd]
     [fluree.crypto.secp256k1 :as secp256k1]
     #?@(:cljs [[goog.crypt :as gcrypt]])

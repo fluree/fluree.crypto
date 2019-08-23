@@ -1,4 +1,4 @@
-/** @fileOverview Arrays of bits, encoded as arrays of Numbers.
+/** fileOverview Arrays of bits, encoded as arrays of Numbers.
  *
  * @author Emily Stark
  * @author Mike Hamburg

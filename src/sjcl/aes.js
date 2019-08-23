@@ -1,4 +1,4 @@
-/** @fileOverview Low-level AES implementation.
+/** fileOverview Low-level AES implementation.
  *
  * This file contains a low-level implementation of AES, optimized for
  * size and for efficiency on several browsers.  It is based on

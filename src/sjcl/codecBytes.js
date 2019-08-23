@@ -1,4 +1,4 @@
-/** @fileOverview Bit array codec implementations.
+/** fileOverview Bit array codec implementations.
  *
  * @author Emily Stark
  * @author Mike Hamburg

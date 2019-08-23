@@ -1,4 +1,4 @@
-/** @fileOverview Javascript SHA-256 implementation.
+/** ileOverview Javascript SHA-256 implementation.
  *
  * An older version of this implementation is available in the public
  * domain, but this one is (c) Emily Stark, Mike Hamburg, Dan Boneh,

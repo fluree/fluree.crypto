@@ -1,5 +1,5 @@
 
-/** @fileOverview Javascript cryptography implementation.
+/** fileOverview Javascript cryptography implementation.
  *
  * Crush to remove comments, shorten variable names and
  * generally reduce transmission size.

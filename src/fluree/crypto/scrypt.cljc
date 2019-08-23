@@ -1,7 +1,9 @@
 (ns fluree.crypto.scrypt
   (:require
     [alphabase.core :as alphabase]
-            #?@(:cljs [[scrypt-js]
+            #?@(:cljs [
+                       [sjcl.crypt.scrypt :as scrypt]
+                       ;[scrypt-js]
                        [goog.object]]))
   #?(:clj (:import (com.lambdaworks.crypto SCryptUtil)
                    (com.lambdaworks.crypto SCrypt)
@@ -12,7 +14,9 @@
   NOTE: This will only work in the browser, not for node.js"
   [size]
   (let [seed #?(:clj (byte-array size)
-                :cljs (js/Uint8Array. size))]
+                :cljs ""
+                ;(js/Uint8Array. size)
+                )]
     #?(:clj  (.nextBytes (SecureRandom.) seed)
        :cljs (js/window.crypto.getRandomValues seed))
     seed))
@@ -39,10 +43,12 @@
                (when (fn? callback)
                  (callback enc-bytes))
                enc-bytes)
-       :cljs (let [internal-cb (fn [error progress key]
+       :cljs (let [
+                   internal-cb (fn [error progress key]
                                  (when error (callback error))
                                  (when key (callback key)))]
-               (scrypt-js raw salt n r p dk-len internal-cb)))))
+               ;(scrypt-js raw salt n r p dk-len internal-cb)
+               ))))
 
 
 
@@ -59,8 +65,7 @@
                    :cljs (.-length encrypted))
          is-valid?      (fn [encrypted test]
                           #?(:clj  (= (seq encrypted) (seq test))
-                             :cljs (.equals goog.object encrypted test))
-                          )
+                             :cljs (.equals goog.object encrypted test)))
          internal-cb    (when (fn? callback)
                           (fn [to-test]
                             ;(js/console.log to-verify)
@@ -76,28 +81,47 @@
        (is-valid? encrypted to-test)))))
 
 
-
-
-
-
 (comment
+
+
+
   (in-ns 'fluree.crypto.scrypt)
 
+
+  ;(sjcl.ecc.point 1 2 3)
   (def message (alphabase/string->bytes "hi"))
 
   (def salt-bytes [-84 28 -14 108 -81 -126 -42 6 -7 61 -12 -78 34 8 13 -78])
   (def mysalt (clj->js (map #(if (neg-int? %) (+ % 256) %) salt-bytes)))
-  (def mysalt (byte-array salt-bytes))
+  ;(def mysalt (byte-array salt-bytes))
+
+  ;(sjcl.misc.scrypt message mysalt 32768 8 1 nil)
+
+  ;(scrypt/scrypt message mysalt 32768 8 1 nil
+  ;)
+
+  ;(scrypt/scrypt 2 2 1 1 2 1 nil)
+
 
   (def result (encrypt message mysalt nil))
 
   (alphabase/bytes->hex (encrypt message mysalt nil))
-  (encrypt message mysalt (fn [x]
-                            (js/console.log (alphabase/bytes->hex x))))
+
+  (def encryption (encrypt message mysalt (fn [x]
+                                         (js/console.log (alphabase/bytes->hex x)))))
 
   result
 
   (check message (alphabase/hex->bytes "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4") mysalt nil)
+  (check message (alphabase/hex->bytes "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4")
+         mysalt (fn [x] (js/console.log x)))
+
+
+
+  (def encryption (encrypt message (fn [x] (println x))))
+
+  encryption
+
   (check message (alphabase/hex->bytes "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4")
          mysalt (fn [x] (js/console.log x)))
 
