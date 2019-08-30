@@ -16,8 +16,7 @@
 
  goog.provide('sjcl.crypt.scrypt');
  goog.require('sjcl.exception');
- goog.require('sjcl.codec');
- goog.require('sjcl.df2.pbkdf2');
+ goog.require('sjcl.misc.pbkdf2');
 
 sjcl.crypt.scrypt = function (password, salt, N, r, p, length, Prff) {
   var SIZE_MAX = Math.pow(2, 32) - 1,
@@ -43,7 +42,7 @@ sjcl.crypt.scrypt = function (password, salt, N, r, p, length, Prff) {
     throw sjcl.exception.invalid("r too big.");
   }
 
-  var blocks = sjcl.df2.pbkdf2(password, salt, 1, p * 128 * r * 8, Prff),
+  var blocks = sjcl.misc.pbkdf2(password, salt, 1, p * 128 * r * 8, Prff),
       len = blocks.length / p;
 
   self.reverse(blocks);
@@ -55,7 +54,7 @@ sjcl.crypt.scrypt = function (password, salt, N, r, p, length, Prff) {
 
   self.reverse(blocks);
 
-  return sjcl.df2.pbkdf2(password, blocks, 1, length, Prff);
+  return sjcl.misc.pbkdf2(password, blocks, 1, length, Prff);
 };
 
 sjcl.crypt.scrypt.salsa20Core = function (word, rounds) {

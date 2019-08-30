@@ -193,13 +193,27 @@
   (-> (pub-key-from-message message signature)
       account-id-from-public))
 
+(defn ^:export scrypt-encrypt
+  "Encrypts a message (string) using a salt (bytes). Returns the encrypted message in hex."
+  [message & args]
+  (let [byte-msg (string->byte-array message)]
+    (-> (apply scrypt/encrypt byte-msg args)
+        (alphabase/byte-array-to-base :hex))))
+
+(defn ^:export scrypt-check
+  "Compares a message (string) with previously encrypted message (hex). "
+  [message encrypted & args]
+  (let [byte-msg      (string->byte-array message)
+        byte-encryped (alphabase/base-to-byte-array encrypted :hex)]
+    (apply scrypt/check byte-msg byte-encryped args)))
+
 
 (comment
 
   (def kp (generate-key-pair))
 
-  (def private #?(:cljs (.-private kp) :clj  (:private kp)))
-  (def public #?(:cljs (.-public kp) :clj  (:public kp)))
+  (def private #?(:cljs (.-private kp) :clj (:private kp)))
+  (def public #?(:cljs (.-public kp) :clj (:public kp)))
 
   (= public (pub-key-from-private private))
 
@@ -279,6 +293,17 @@
   (= account-id (account-id-from-message "hi" sig))
   ;; CLJ + CLJS
 
+  (def salt-bytes [-84 28 -14 108 -81 -126 -42 6 -7 61 -12 -78 34 8 13 -78])
+  (def mysalt #?(:clj (byte-array salt-bytes)
+                 :cljs (clj->js (map #(if (neg-int? %) (+ % 256) %) salt-bytes))))
+
+  (def scrypt-hex (scrypt-encrypt "hi" mysalt 32768 8 1))
+  scrypt-hex
+  ;; CLJ  + CLJS
+  ;; "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4"
+
+  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1)
+  ;; CLJ + CLJS
   )
 
 

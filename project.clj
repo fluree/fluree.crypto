@@ -26,7 +26,9 @@
                                :source-map-timestamp true
                                :pretty-print         false
                                :optimize-constants   false
-                               :static-fns           true
+                               ;This option is mainly intended to be used for a release build since it can increase performance due to decreased allocation. Defaults to true under :advanced optimizations otherwise to false.
+                               :static-fns           false
+                               ; Useful to have set to false at REPL development to facilitate function redefinition, and useful to set to true for release for performance.
                                :install-deps         true
                                :npm-deps             {:sha3      "2.0.6"
                                                       :scrypt-js "2.0.4"}

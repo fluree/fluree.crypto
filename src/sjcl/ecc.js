@@ -551,16 +551,16 @@ sjcl.ecc.elGamal = {
   * @constructor
   * @augments sjcl.ecc.basicKey.publicKey
   */
-//  publicKey: function (curve, point) {
-//    sjcl.ecc.basicKey.publicKey.apply(this, arguments);
-//  },
+  publicKey: function (curve, point) {
+    sjcl.ecc.basicKey.publicKey.apply(this, arguments);
+  },
   /** elGamal secretKey
   * @constructor
   * @augments sjcl.ecc.basicKey.secretKey
   */
-//  secretKey: function (curve, exponent) {
-//    sjcl.ecc.basicKey.secretKey.apply(this, arguments);
-//  }
+  secretKey: function (curve, exponent) {
+    sjcl.ecc.basicKey.secretKey.apply(this, arguments);
+  }
 };
 
 sjcl.ecc.elGamal.publicKey.prototype = {
@@ -669,9 +669,9 @@ sjcl.ecc.ecdsa.publicKey.prototype = {
 * @constructor
 * @augments sjcl.ecc.basicKey.publicKey
 */
-//sjcl.ecc.ecdsa.secretKey = function (curve, exponent) {
-//  sjcl.ecc.basicKey.secretKey.apply(this, arguments);
-//};
+sjcl.ecc.ecdsa.secretKey = function (curve, exponent) {
+  sjcl.ecc.basicKey.secretKey.apply(this, arguments);
+};
 
 /** specific functions for ecdsa secretKey. */
 sjcl.ecc.ecdsa.secretKey.prototype = {
