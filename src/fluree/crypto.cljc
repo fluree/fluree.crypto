@@ -124,25 +124,15 @@
        (alphabase/byte-array-to-base (keyword output-format)))))
 
 (defn ^:export aes-encrypt
-  ([x key] (aes-encrypt x key :hex :string))
-  ([x key output-format] (aes-encrypt x key output-format :string))
-  ([x key output-format input-format]
-   (aes/encrypt x key)))
-
-(defn ^:export aes-encrypt-normalize
-  ([x key] (aes-encrypt-normalize x key :hex :string))
-  ([x key output-format] (aes-encrypt-normalize x key output-format :string))
-  ([x key output-format input-format]
-   (if (= :string input-format)
-     (-> (normalize-string x)
-         (aes-encrypt key))
-     (aes-encrypt x key))))
+  ([x iv key] (aes-encrypt x iv key :hex))
+  ([x iv key output-format]
+   (aes/encrypt x key :iv iv :output-format output-format)))
 
 (defn ^:export aes-decrypt
-  ([x key] (aes-decrypt x key :string :hex))
-  ([x key output-format] (aes-decrypt x key output-format :hex))
-  ([x key output-format input-format]
-   (aes/decrypt x key)))
+  ([x iv key] (aes-decrypt x iv key :string :hex))
+  ([x iv key output-format] (aes-decrypt x iv key output-format :hex))
+  ([x iv key output-format input-format]
+   (aes/decrypt x key :iv iv :input-format input-format :output-format output-format)))
 
 (defn ^:export generate-key-pair
   ([] (secp256k1/generate-key-pair))
@@ -294,7 +284,7 @@
   ;; CLJ + CLJS
 
   (def salt-bytes [-84 28 -14 108 -81 -126 -42 6 -7 61 -12 -78 34 8 13 -78])
-  (def mysalt #?(:clj (byte-array salt-bytes)
+  (def mysalt #?(:clj  (byte-array salt-bytes)
                  :cljs (clj->js (map #(if (neg-int? %) (+ % 256) %) salt-bytes))))
 
   (def scrypt-hex (scrypt-encrypt "hi" mysalt 32768 8 1))

@@ -4,11 +4,11 @@
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
-    #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-               [sjcl.ecc :as ecc]
-               [sjcl.bn :as bn]
-               [sjcl.codec.hex :as codecHex]
-               [sjcl.codec.bytes :as codecBytes]])
+            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
+                       [sjcl.ecc :as ecc]
+                       [sjcl.bn :as bn]
+                       [sjcl.codec.hex :as codecHex]
+                       [sjcl.codec.bytes :as codecBytes]])
             [fluree.crypto.ripemd :as ripemd]
             )
   #?(:clj
@@ -298,7 +298,9 @@ public key, hex encoded."
   "Recover a public key from original message and signature (hex) of the
   message's sha2-256 hash."
   [input signature]
-  (let [hash (sha2/sha2-256 (alphabase/string->bytes input))]
+  (let [hash (sha2/sha2-256 (if (string? input)
+                              (alphabase/string->bytes input)
+                              input))]
     (recover-public-key-from-hash hash signature)))
 
 
@@ -325,7 +327,7 @@ public key, hex encoded."
   "Verifies a message given a signature (in hex).
   Assumes signature is DER-encoded with a recovery byte."
   [pub-key message signature]
-  (let [hash      (sha2/sha2-256 (alphabase/string->bytes message))]
+  (let [hash (sha2/sha2-256 (alphabase/string->bytes message))]
     (verify-signature-from-hash pub-key hash signature)))
 
 
@@ -335,7 +337,6 @@ public key, hex encoded."
 
 
 
- (subs "1b3045022100ce83b3c04ba99489c7319dbda792e356fb3d0248466c4147c4f79d23def591320220314e76cc5d5f760a2fcebb1fecf216d1bf65a92644522ea3973743531d21f156" 2 4)
   )
 
 

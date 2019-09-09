@@ -1,25 +1,13 @@
 (ns fluree.crypto.aes
-  (:require
-    [alphabase.core :as alphabase]
+  (:require [alphabase.core :as alphabase]
             [fluree.crypto.sha3 :as sha3]
+            [fluree.crypto.util :as util]
             #?@(:cljs [[goog.crypt.Aes]
                        [goog.crypt.Cbc]
                        [goog.crypt.Pkcs7]]))
   #?(:clj (:import (java.security SecureRandom)
                    (javax.crypto KeyGenerator Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
-
-
-;; This is assuming 256 bit encryption.
-(defn hash-string-key
-  "Takes a sha3-512 hash of provided string key.
-  We only need first 32 bytes."
-  [key]
-  (let [hash-512 (sha3/sha3-512 (if (string? key)
-                                  (alphabase/string->bytes key)
-                                  key))]
-    #?(:clj  (take 32 hash-512)
-       :cljs (.slice hash-512 0 32))))
 
 
 (defn ^:export encrypt
@@ -29,13 +17,13 @@
   [x key & {:keys [iv output-format] :or {iv            [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]
                                           output-format :hex}}]
   (let [key-ba (if (string? key)
-                 (hash-string-key key)
+                 (util/hash-string-key key 32)
                  key)
         ba     (if (string? x)
                  (alphabase/string->bytes x)
                  x)
         encrypted #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv )))
+               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
                      spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/ENCRYPT_MODE spec iv)
@@ -60,7 +48,7 @@
                    input-format  :hex
                    output-format :string}}]
   (let [key-ba (if (string? key)
-                 (hash-string-key key)
+                 (util/hash-string-key key 32)
                  key)
         x-ba   (if (string? x)
                  (case (keyword input-format)
@@ -68,7 +56,7 @@
                    :base64 (alphabase/base64->bytes x))
                  x)
         decrypt-ba #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv )))
+               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
                      spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
                      cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
                  (.init cipher Cipher/DECRYPT_MODE spec iv)
