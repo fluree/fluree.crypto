@@ -33,15 +33,18 @@
                                          (.getN params)
                                          (.getH params)))))
 
+(defonce modulus #?(:clj  (.getN secp256k1)
+                    :cljs (.-r secp256k1)))
+
 (defn valid-private?
   "Returns true if private key, as big number/integer, is valid.
   Private key must be >= 1 and <= curve modulus."
   [private]
   #?(:clj  (and (<= 1 private)
-                (<= private (.getN secp256k1)))
+                (<= private modulus))
      :cljs (and
              (.greaterEquals private 1)
-             (.greaterEquals (.-r secp256k1) private))))
+             (.greaterEquals modulus private))))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -76,7 +79,7 @@ public key, hex encoded."
                              (string? private) (BigInteger. private 16))
                       :cljs (-> (sjcl.bn.) (.initWith private)))]
     (when-not (valid-private? private-bn)
-      (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {})))
+      (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     #?(:clj  {:private private-bn
               :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
        :cljs #js {:private private-bn
@@ -334,8 +337,6 @@ public key, hex encoded."
 (comment
 
   (verify "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5" "hi" "1c3045022100e81841ed32ed8c36e31dfa671cb21c1d9bdd6b581ea699b62d4201445e3fe2ea02200473ef2d72258029dae899ece3846c5e06190ce27ca3f289bf8a5cf43ef02c68")
-
-
 
   )
 
