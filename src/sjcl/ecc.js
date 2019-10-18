@@ -13,7 +13,8 @@ goog.require('sjcl.hash.sha256');
 
 /**
  * Represents a point on a curve in affine coordinates.
- * @constructor
+ * @noinline
+ * @export
  * @param {sjcl.ecc.curve} curve The curve that this point lies on.
  * @param {bigInt} x The x coordinate.
  * @param {bigInt} y The y coordinate.
@@ -91,7 +92,8 @@ sjcl.ecc.point.prototype = {
  * Represents a point on a curve in Jacobian coordinates. Coordinates can be specified as bigInts or strings (which
  * will be converted to bigInts).
  *
- * @constructor
+ * @noinline
+ * @export
  * @param {bigInt/string} x The x coordinate.
  * @param {bigInt/string} y The y coordinate.
  * @param {bigInt/string} z The z coordinate.
@@ -325,7 +327,8 @@ sjcl.ecc.pointJac.prototype = {
 /**
  * Construct an elliptic curve. Most users will not use this and instead start with one of the NIST curves defined below.
  *
- * @constructor
+ * @noinline
+ * @export
  * @param {bigInt} p The prime modulus.
  * @param {bigInt} r The prime order of the curve.
  * @param {bigInt} a The constant a in the equation of the curve y^2 = x^3 + ax + b (for NIST curves, a is always -3).
@@ -454,7 +457,8 @@ sjcl.ecc.deserialize = function (key) {
 */
 sjcl.ecc.basicKey = {
   /** ecc publicKey.
-  * @constructor
+  * @noinline
+  * @export
   * @param {curve} curve the elliptic curve
   * @param {point} point the point on the curve
   */
@@ -490,7 +494,8 @@ sjcl.ecc.basicKey = {
   },
 
   /** ecc secretKey
-  * @constructor
+  * @noinline
+  * @export
   * @param {curve} curve the elliptic curve
   * @param exponent
   */
@@ -548,14 +553,16 @@ sjcl.ecc.elGamal = {
   */
   generateKeys: sjcl.ecc.basicKey.generateKeys("elGamal"),
   /** elGamal publicKey.
-  * @constructor
+  * @noinline
+  * @export
   * @augments sjcl.ecc.basicKey.publicKey
   */
   publicKey: function (curve, point) {
     sjcl.ecc.basicKey.publicKey.apply(this, arguments);
   },
   /** elGamal secretKey
-  * @constructor
+  * @noinline
+  * @export
   * @augments sjcl.ecc.basicKey.secretKey
   */
   secretKey: function (curve, exponent) {
@@ -623,7 +630,8 @@ sjcl.ecc.ecdsa = {
 };
 
 /** ecdsa publicKey.
-* @constructor
+* @noinline
+* @export
 * @augments sjcl.ecc.basicKey.publicKey
 */
 sjcl.ecc.ecdsa.publicKey = function (curve, point) {
@@ -666,7 +674,8 @@ sjcl.ecc.ecdsa.publicKey.prototype = {
 };
 
 /** ecdsa secretKey
-* @constructor
+* @noinline
+* @export
 * @augments sjcl.ecc.basicKey.publicKey
 */
 sjcl.ecc.ecdsa.secretKey = function (curve, exponent) {

@@ -1,0 +1,6 @@
+{
+  "name": "fluree-cryptography-base",
+  "bin": {
+    "fluree.crypto": "index.js"
+  }
+}

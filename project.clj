@@ -45,7 +45,28 @@
                                :npm-deps      {:sha3      "2.0.6"
                                                :scrypt-js "2.0.4"}
                                :libs          ["src/goog/crypt/pkcs7.js"
-                                               "src/sjcl"]}}]}
+                                               "src/sjcl"]}}
+               {:id "prod"
+                :source-paths ["src"]
+                :compiler {:main fluree.crypto
+                           :output-to "package/index.js"
+                           :target :nodejs
+                           :output-dir "target"
+                           :optimizations :advanced
+                           :optimize-constants false
+                           :pretty-print false
+                           :pseudo-names true
+                           :infer-externs true
+                           :install-deps true
+                           :npm-deps      {:sha3      "2.0.6"
+                                           :scrypt-js "2.0.4"}
+                           :libs          ["src/goog/crypt/pkcs7.js"
+                                           "src/sjcl"]
+                           }
+
+                }
+
+               ]}
   :repl-options {:init-ns fluree.crypto})
 
 

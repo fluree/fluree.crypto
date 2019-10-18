@@ -8,7 +8,8 @@ goog.require('sjcl.random');
 
 /**
  * Constructs a new bignum from another bignum, a number or a hex string.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.bn = function(it) {
   this.initWith(it);
@@ -573,7 +574,8 @@ sjcl.bn.prototype.radixMask = (1 << sjcl.bn.prototype.radix) - 1;
  * i.e. a prime of the form 2^e + sum(a * 2^b),where the sum is negative and sparse.
  */
 sjcl.bn.pseudoMersennePrime = function(exponent, coeff) {
-  /** @constructor
+  /** @noinline
+  * @export
   * @private
   */
   function p(it) {
