@@ -44,7 +44,7 @@
   sjcl.bitArray.bitSlice = function (a, bstart, bend) {
     a = sjcl.bitArray._shiftRight(a.slice(bstart/32), 32 - (bstart & 31)).slice(1);
     return (bend === undefined) ? a : sjcl.bitArray.clamp(a, bend-bstart);
-  },
+  };
 
   /**
    * Extract a number packed into a bit array.
@@ -65,7 +65,7 @@
       x = a[bstart/32|0] >>> sh;
     }
     return x & ((1<<blength) - 1);
-  },
+  };
 
   /**
    * Concatenate two bit arrays.
@@ -84,7 +84,7 @@
     } else {
       return sjcl.bitArray._shiftRight(a2, shift, last|0, a1.slice(0,a1.length-1));
     }
-  },
+  };
 
   /**
    * Find the length of an array of bits.
@@ -113,7 +113,7 @@
       a[l-1] = sjcl.bitArray.partial(len, a[l-1] & 0x80000000 >> (len-1), 1);
     }
     return a;
-  },
+  };
 
   /**
    * Make a partial word for a bit array.
@@ -125,7 +125,7 @@
    sjcl.bitArray.partial = function (len, x, _end) {
     if (len === 32) { return x; }
     return (_end ? x|0 : x << (32-len)) + len * 0x10000000000;
-  },
+  };
 
   /**
    * Get the number of bits used by a partial word.
@@ -134,7 +134,7 @@
    */
    sjcl.bitArray.getPartial = function (x) {
     return Math.round(x/0x10000000000) || 32;
-  },
+  };
 
   /**
    * Compare two arrays for equality in a predictable amount of time.
@@ -151,7 +151,7 @@
       x |= a[i]^b[i];
     }
     return (x === 0);
-  },
+  };
 
   /** Shift an array right.
    * @param {bitArray} a The array to shift.
@@ -180,14 +180,14 @@
     shift2 = sjcl.bitArray.getPartial(last2);
     out.push(sjcl.bitArray.partial(shift+shift2 & 31, (shift + shift2 > 32) ? carry : out.pop(),1));
     return out;
-  },
+  };
 
   /** xor a block of 4 words together.
    * @private
    */
    sjcl.bitArray._xor4 = function(x,y) {
     return [x[0]^y[0],x[1]^y[1],x[2]^y[2],x[3]^y[3]];
-  },
+  };
 
   /** byteswap a word array inplace.
    * (does not handle partial words)
@@ -201,4 +201,4 @@
       a[i] = (v >>> 24) | ((v >>> 8) & m) | ((v & m) << 8) | (v << 24);
     }
     return a;
-  }
+  };

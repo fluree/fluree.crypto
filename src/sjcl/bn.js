@@ -576,7 +576,6 @@ sjcl.bn.prototype.radixMask = (1 << sjcl.bn.prototype.radix) - 1;
 sjcl.bn.pseudoMersennePrime = function(exponent, coeff) {
   /** @noinline
   * @export
-  * @private
   */
   function p(it) {
     this.initWith(it);

@@ -20,7 +20,8 @@ goog.require('sjcl.exception');
 
 /**
  * Context for a SHA-256 operation in progress.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.hash.sha256 = function (hash) {
   if (!this._key[0]) { this._precompute(); }

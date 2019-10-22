@@ -10,7 +10,8 @@ goog.require('sjcl.exception');
 
 /**
  * Context for a RIPEMD-160 operation in progress.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.hash.ripemd160 = function (hash) {
     if (hash) {

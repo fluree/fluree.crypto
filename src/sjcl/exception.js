@@ -14,7 +14,8 @@ goog.provide('sjcl.exception');
 
 /**
  * Ciphertext is corrupt.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.exception.corrupt = function(message) {
       this.toString = function() { return "CORRUPT: "+this.message; };
@@ -23,7 +24,8 @@ sjcl.exception.corrupt = function(message) {
 
 /**
  * Invalid parameter.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.exception.invalid = function(message) {
       this.toString = function() { return "INVALID: "+this.message; };
@@ -32,7 +34,8 @@ sjcl.exception.invalid = function(message) {
 
 /**
  * Bug or missing feature in SJCL.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.exception.bug = function(message) {
       this.toString = function() { return "BUG: "+this.message; };
@@ -41,7 +44,8 @@ sjcl.exception.bug = function(message) {
 
 /**
  * Something isn't ready.
- * @constructor
+ * @noinline
+ * @export
  */
 sjcl.exception.notReady = function(message) {
       this.toString = function() { return "NOT READY: "+this.message; };

@@ -36,33 +36,32 @@
                                                       "src/sjcl"]}}
                {:id           "min"
                 :source-paths ["src"]
-                :compiler     {:asset-path    "js"
-                               :output-to     "resources/build/fluree-crypto.js"
-                               :main          fluree.crypto
-                               :optimizations :advanced
-                               :pretty-print  false
-                               :install-deps  true
-                               :npm-deps      {:sha3      "2.0.6"
-                                               :scrypt-js "2.0.4"}
-                               :libs          ["src/goog/crypt/pkcs7.js"
-                                               "src/sjcl"]}}
-               {:id "prod"
+                :compiler     {:main               fluree.crypto
+                               :output-to          "resources/package/min/index.js"
+                               :optimizations      :simple
+                               :optimize-constants false
+                               :pretty-print       false
+                               :externs            ["externs/externs.js"]
+                               :install-deps       true
+                               :npm-deps           {:sha3      "2.0.6"
+                                                    :scrypt-js "2.0.4"}
+                               :libs               ["src/goog/crypt/pkcs7.js"
+                                                    "src/sjcl"]}}
+               {:id           "package"
                 :source-paths ["src"]
-                :compiler {:main fluree.crypto
-                           :output-to "package/index.js"
-                           :target :nodejs
-                           :output-dir "target"
-                           :optimizations :advanced
-                           :optimize-constants false
-                           :pretty-print false
-                           :pseudo-names true
-                           :infer-externs true
-                           :install-deps true
-                           :npm-deps      {:sha3      "2.0.6"
-                                           :scrypt-js "2.0.4"}
-                           :libs          ["src/goog/crypt/pkcs7.js"
-                                           "src/sjcl"]
-                           }
+                :compiler     {:main               fluree.crypto
+                               :output-to          "resources/package/index.js"
+                               :target             :nodejs
+                               :output-dir         "target"
+                               :optimizations      :advanced
+                               :optimize-constants false
+                               :pretty-print       false
+                               :externs            ["externs/externs.js"]
+                               :install-deps       true
+                               :npm-deps           {:sha3      "2.0.6"
+                                                    :scrypt-js "2.0.4"}
+                               :libs               ["src/goog/crypt/pkcs7.js"
+                                                    "src/sjcl"]}
 
                 }
 

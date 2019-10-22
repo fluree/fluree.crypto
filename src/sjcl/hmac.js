@@ -10,7 +10,8 @@ goog.require('sjcl.hash.sha256');
 goog.require('sjcl.exception');
 
 /** HMAC with the specified hash function.
- * @constructor
+ * @noinline
+ * @export
  * @param {bitArray} key the key for HMAC.
  * @param {Object} [Hash=sjcl.hash.sha256] The hash function to use.
  */

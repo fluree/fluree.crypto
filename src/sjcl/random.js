@@ -47,7 +47,8 @@ goog.require('sjcl.cipher.aes');
  * state files in local storage; cookies containing randomness; etc.  So
  * look for improvements in future versions.
  * </p>
- * @constructor
+ * @noninline
+ * @export
  */
 sjcl.prng = function(defaultParanoia) {
 
@@ -340,7 +341,7 @@ sjcl.prng.prototype = {
     return this._cipher.encrypt(this._counter);
   },
 
-  /* Rekey the AES instance with itself after a request, or every _MAX_WORDS_PER_BURST words.
+  /** Rekey the AES instance with itself after a request, or every _MAX_WORDS_PER_BURST words.
    * @private
    */
   _gate: function () {

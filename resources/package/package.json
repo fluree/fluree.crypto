@@ -1,6 +1,15 @@
 {
   "name": "fluree-cryptography-base",
-  "bin": {
-    "fluree.crypto": "index.js"
-  }
+  "version": "0.1.2",
+  "description": "Base cryptography functions that are used in Fluree",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/fluree/fluree-cryptography-base"
+  },
+  "author": "Fluree, PBC",
+  "license": "ISC"
 }

@@ -1,4 +1,3 @@
-// wrapper function from https://groups.google.com/forum/#!topic/clojurescript/vNTGZht1XhE
 (function (root, factory) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
@@ -24,6 +23,8 @@ if(typeof Math.imul == "undefined" || (Math.imul(0xffffffff,5) == 0)) {
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
     }
 }
+
+
 ;(function(){
 var g,aa=this;function ba(a){return"string"==typeof a}
 function u(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
@@ -457,7 +458,7 @@ function Ji(a,b){var c=li.r.bitLength()/8,d=je(c,1),e=je(c,0);b=b.toBits(null);b
 function Ki(a,b,c){var d=li.r;b.greaterEquals(d);b=c.add(c).greaterEquals(d);a=0!==(T.c(a.y.o,0)&1);M.c(b,a)}
 function Li(a,b,c){var d=Ji(a,b),e=li.r,f=function(){var b=Kh(a);return Y.fromBits(b)}(),h=e.bitLength();if(!M.c(P(a),h/8))throw Error("Assert failed: Hash should have the same number of bytes as the curve modulus\n(\x3d (count hash-ba) (/ l 8))");var k=function(){var a=li.G.mult(d),c=a.x.mod(e),h=c.mul(b).add(f).mul(d.inverseMod(e)).mod(e),k=y(h.add(h).greaterEquals(e))?e.sub(h):h;return new W(null,4,5,Zd,[c,k,h,a],null)}();h=Q.h(k,0,null);var l=Q.h(k,1,null),m=Q.h(k,2,null);k=Q.h(k,3,null);y(c)&&
 Ki(k,h,m);return bg(ki(h,l))}v("fluree.crypto.secp256k1.sign_hash",Li);function Mi(a,b){a="string"===typeof a?na(a):a;b="string"===typeof b?qe(b):b;a=lh(a);return Li(a,b,!0)}v("fluree.crypto.secp256k1.sign",Mi);
-function Ni(a,b){b=b.toLowerCase();var c=b.substring(0,2);var d=new uf(null,new mb(null,4,["1c",null,"1b",null,"1e",null,"1d",null],null),null);d=d.f?d.f(c):d.call(null,c);if(y(d))d=Yc.c(ji(b.substring(2)),cg(c)[0]|0);else if(M.c("30",c))d=ji(b);else throw Uf("Input must start with the code 30, or start with a recovery code (either 1b, 1c, 1d, or 1e)",new mb(null,1,[new V(null,"argument","argument",1183001841),b],null));b=Q.h(d,0,null);c=Q.h(d,1,null);d=Q.h(d,2,null);b=new mb(null,3,[new V(null,"R",clj
+function Ni(a,b){b=b.toLowerCase();var c=b.substring(0,2);var d=new uf(null,new mb(null,4,["1c",null,"1b",null,"1e",null,"1d",null],null),null);d=d.f?d.f(c):d.call(null,c);if(y(d))d=Yc.c(ji(b.substring(2)),cg(c)[0]|0);else if(M.c("30",c))d=ji(b);else throw Uf("Input must start with the code 30, or start with a recovery code (either 1b, 1c, 1d, or 1e)",new mb(null,1,[new V(null,"argument","argument",1183001841),b],null));b=Q.h(d,0,null);c=Q.h(d,1,null);d=Q.h(d,2,null);b=new mb(null,3,[new V(null,"R",
 "R",-936662523),b,new V(null,"S","S",1267293308),c,new V(null,"recover","recover",849894427),d],null);b=null!=b&&(b.j&64||w===b.Ba)?Wd(qf,b):b;d=T.c(b,new V(null,"recover","recover",849894427));c=T.c(b,new V(null,"R","R",-936662523));b=T.c(b,new V(null,"S","S",1267293308));d|=0;if(!("number"===typeof d&&27<=d&&30>=d))throw Error(["Assert failed: ",["Recovery byte should be between 0x1B and 0x1E. Provided: ",B.f(d.toString(16))].join(""),"\n(and (number? recovery-byte) (\x3c\x3d 27 recovery-byte) (\x3c\x3d recovery-byte 30))"].join(""));
 var e=li.r.bitLength()/8;if(!M.c(e,P(a)))throw Error(["Assert failed: ",["Hash should have ",B.f(e)," bytes, but had ",B.f(P(a)),"."].join(""),"\n(\x3d l (count hash))"].join(""));e=be(d-27);var f=!be(d-27>>1);d=li.r;f=f?c.add(d):c;var h=li,k=h.field.modulus;h=hi(f.mul(h.a.add(f.square())).add(h.b),k);k=M.c(e,0===(T.c(h.o,0)&1))?h:k.sub(h);e=(new Y).initWith(f);f=(new Y).initWith(k);c=c.inverseMod(d);a=gi(a);a=d.sub(a);d=new Z.point(li,li.G.x,li.G.y);a=(new Z.point(li,e,f)).mult2(b,a,d);b=(new Z.point(li,
 a.x,a.y)).mult(c);a=fi(b.x.toString().replace(/^0x/,""));b=fi(b.y.toString().replace(/^0x/,""));return ii(a,b)}function Oi(a,b){a=lh("string"===typeof a?na(a):a);return Ni(a,b)}

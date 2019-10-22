@@ -22,7 +22,8 @@ goog.require('sjcl.exception');
  * Schedule out an AES key for both encryption and decryption.  This
  * is a low-level class.  Use a cipher mode to do bulk encryption.
  *
- * @constructor
+ * @noinline
+ * @export
  * @param {Array} key The key as an array of 4, 6 or 8 words.
  */
 sjcl.cipher.aes = function (key) {
