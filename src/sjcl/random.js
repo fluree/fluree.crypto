@@ -47,7 +47,7 @@ goog.require('sjcl.cipher.aes');
  * state files in local storage; cookies containing randomness; etc.  So
  * look for improvements in future versions.
  * </p>
- * @noninline
+ * @noinline
  * @export
  */
 sjcl.prng = function(defaultParanoia) {

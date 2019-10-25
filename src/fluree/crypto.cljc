@@ -143,10 +143,11 @@
 (defn ^:export pub-key-from-private
   "Take a private key as either a hex string or BigInteger (clj) bignumber (cljs), returns as a hex string."
   [private-key]
-  (-> (secp256k1/public-key-from-private private-key)
-      secp256k1/format-key-pair
-      #?(:clj  :public
-         :cljs .-public)))
+  (let [pub-key  (secp256k1/public-key-from-private private-key)
+        pair     (secp256k1/format-key-pair pub-key)
+        pub-key* #?(:clj  (:public pair)
+                    :cljs (aget pair "public"))]
+    pub-key*))
 
 (defn ^:export account-id-from-private
   [private-key]

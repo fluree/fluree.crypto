@@ -13,7 +13,13 @@ goog.require('sjcl.bitArray');
  * @namespace
  */
 sjcl.codec.bytes = {
-  /** Convert from a bitArray to an array of bytes. */
+  /**
+  * Convert from a bitArray to an array of bytes.
+  * @noinline
+  * @export
+  * @function
+  * @param arr
+  */
   fromBits: function (arr) {
     var out = [], bl = sjcl.bitArray.bitLength(arr), i, tmp;
     for (i=0; i<bl/8; i++) {
@@ -25,7 +31,13 @@ sjcl.codec.bytes = {
     }
     return out;
   },
-  /** Convert from an array of bytes to a bitArray. */
+  /**
+  * Convert from an array of bytes to a bitArray.
+  * @noinline
+  * @export
+  * @function
+  * @param bytes
+  */
   toBits: function (bytes) {
     var out = [], i, tmp=0;
     for (i=0; i<bytes.length; i++) {

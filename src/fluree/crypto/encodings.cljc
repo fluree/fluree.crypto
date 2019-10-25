@@ -29,7 +29,7 @@
   ([bn] (biginteger->bytes bn nil))
   ([bn l]
     #?(:clj  (-> bn .toByteArray)
-       :cljs (-> bn (.toBits l) codecBytes/fromBits))))
+       :cljs (-> bn (.toBits l) (codecBytes/fromBits)))))
 
 (defn bytes->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."

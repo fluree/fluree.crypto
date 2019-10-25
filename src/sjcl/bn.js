@@ -26,6 +26,8 @@ sjcl.bn.prototype = {
 
   /**
    * Initializes this with it, either as a bn, a number, or a hex string.
+   * @noinline
+   * @export
    */
   initWith: function(it) {
     var i=0, k;
@@ -574,7 +576,8 @@ sjcl.bn.prototype.radixMask = (1 << sjcl.bn.prototype.radix) - 1;
  * i.e. a prime of the form 2^e + sum(a * 2^b),where the sum is negative and sparse.
  */
 sjcl.bn.pseudoMersennePrime = function(exponent, coeff) {
-  /** @noinline
+  /**
+  * @noinline
   * @export
   */
   function p(it) {

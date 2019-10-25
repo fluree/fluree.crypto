@@ -7,8 +7,7 @@
 
 /**
  * Arrays of bits, encoded as arrays of Numbers.
- * @namespace
- * @description
+ * @classdesc
  * <p>
  * These objects are the currency accepted by SJCL's crypto functions.
  * </p>
@@ -35,10 +34,11 @@
 
   /**
    * Array slices in units of bits.
+   * @noinline
+   * @export
    * @param {bitArray} a The array to slice.
    * @param {Number} bstart The offset to the start of the slice, in bits.
-   * @param {Number} bend The offset to the end of the slice, in bits.  If this is undefined,
-   * slice until the end of the array.
+   * @param {Number} bend The offset to the end of the slice, in bits.  If this is undefined, slice until the end of the array.
    * @return {bitArray} The requested slice.
    */
   sjcl.bitArray.bitSlice = function (a, bstart, bend) {
@@ -48,6 +48,8 @@
 
   /**
    * Extract a number packed into a bit array.
+   * @noinline
+   * @export
    * @param {bitArray} a The array to slice.
    * @param {Number} bstart The offset to the start of the slice, in bits.
    * @param {Number} blength The length of the number to extract.
@@ -69,6 +71,8 @@
 
   /**
    * Concatenate two bit arrays.
+   * @noinline
+   * @export
    * @param {bitArray} a1 The first array.
    * @param {bitArray} a2 The second array.
    * @return {bitArray} The concatenation of a1 and a2.
@@ -88,6 +92,8 @@
 
   /**
    * Find the length of an array of bits.
+   * @noinline
+   * @export
    * @param {bitArray} a The array.
    * @return {Number} The length of a, in bits.
    */
@@ -100,6 +106,8 @@
 
   /**
    * Truncate an array.
+   * @noinline
+   * @export
    * @param {bitArray} a The array.
    * @param {Number} len The length to truncate to, in bits.
    * @return {bitArray} A new array, truncated to len bits.
@@ -117,6 +125,8 @@
 
   /**
    * Make a partial word for a bit array.
+   * @noinline
+   * @export
    * @param {Number} len The number of bits in the word.
    * @param {Number} x The bits.
    * @param {Number} [_end=0] Pass 1 if x has already been shifted to the high side.
@@ -128,6 +138,8 @@
   };
 
   /**
+   * @noinline
+   * @export
    * Get the number of bits used by a partial word.
    * @param {Number} x The partial word.
    * @return {Number} The number of bits used by the partial word.
@@ -138,6 +150,8 @@
 
   /**
    * Compare two arrays for equality in a predictable amount of time.
+   * @noinline
+   * @export
    * @param {bitArray} a The first array.
    * @param {bitArray} b The second array.
    * @return {boolean} true if a == b; false otherwise.
@@ -191,6 +205,8 @@
 
   /** byteswap a word array inplace.
    * (does not handle partial words)
+   * @noinline
+   * @export
    * @param {sjcl.bitArray} a word array
    * @return {sjcl.bitArray} byteswapped array
    */

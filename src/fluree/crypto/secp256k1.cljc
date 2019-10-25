@@ -60,15 +60,14 @@ public key, hex encoded."
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair) :cljs (.-private pair))
-        public #?(:clj  (:public pair) :cljs (.-public pair))
-        x #?(:clj       (-> public .getAffineXCoord .toBigInteger (.toString 16))
-             :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
-        y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
-             :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))
-        pair-hex        {:private (encodings/biginteger->hex private)
-                         :public  (encodings/x962-encode x y)}]
-
+  (let [private   #?(:clj  (:private pair) :cljs (aget pair "private"))
+        public    #?(:clj  (:public pair)  :cljs (aget pair "public"))
+        x         #?(:clj  (-> public .getAffineXCoord .toBigInteger (.toString 16))
+                     :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
+        y         #?(:clj  (-> public .getAffineYCoord .toBigInteger (.toString 16))
+                     :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))
+        pair-hex  {:private (encodings/biginteger->hex private)
+                   :public  (encodings/x962-encode x y)}]
     #?(:clj  pair-hex
        :cljs (clj->js pair-hex))))
 
