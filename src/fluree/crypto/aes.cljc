@@ -14,8 +14,8 @@
   "Encrypts with AES/CBC/PKCS{5/7}Padding by hashing a 256 bit key out
   of key (requires Unlimited Strength crypto to be enabled).
   You can provide an alternate initial vector of unsigned(!) bytes of size 16 for CBC."
-  [x key & {:keys [iv output-format] :or {iv            [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]
-                                          output-format :hex}}]
+  [x key & [{:keys [iv output-format] :or {iv            [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]
+                                           output-format :hex}}]]
   (let [key-ba (if (string? key)
                  (util/hash-string-key key 32)
                  key)

@@ -30,7 +30,20 @@ sjcl.bn.prototype = {
     var i=0, k;
     switch(typeof it) {
     case "object":
-      this.limbs = it.limbs.slice(0);
+      // if object is an array, this is a bitArray passed in, otherwise it is already a big number
+      if (Array.isArray(it)) {
+          var words=[],
+              w=sjcl.bitArray,
+              l = Math.min(0x100000000, w.bitLength(it)), e = l % this.radix || this.radix;
+
+          words[0] = w.extract(it, 0, e);
+          for (; e < l; e += this.radix) {
+            words.unshift(w.extract(it, e, this.radix));
+          }
+          this.limbs = words;
+      } else {
+        this.limbs = it.limbs.slice(0);
+      }
       break;
 
     case "number":
@@ -546,23 +559,6 @@ sjcl.bn.prototype = {
     return out+7 & -8;
   }
 };
-
-/** @memberOf sjcl.bn
-* @this { sjcl.bn }
-*/
-sjcl.bn.fromBits = function(bits) {
-  var Class = this, out = new Class(), words=[], w=sjcl.bitArray, t = this.prototype,
-      l = Math.min(this.bitLength || 0x100000000, w.bitLength(bits)), e = l % t.radix || t.radix;
-
-  words[0] = w.extract(bits, 0, e);
-  for (; e < l; e += t.radix) {
-    words.unshift(w.extract(bits, e, t.radix));
-  }
-
-  out.limbs = words;
-  return out;
-};
-
 
 
 sjcl.bn.prototype.ipv = 1 / (sjcl.bn.prototype.placeVal = Math.pow(2,sjcl.bn.prototype.radix));

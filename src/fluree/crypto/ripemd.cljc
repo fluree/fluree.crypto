@@ -1,6 +1,6 @@
 (ns fluree.crypto.ripemd
   (:require [alphabase.core :as alphabase]
-            #?@(:cljs [[sjcl.codec.bytes :as sjcl-bytes]
+            #?@(:cljs [[sjcl.codec.bytes :as codecBytes]
                        [sjcl.hash.ripemd160 :as js-ripemd160]]))
   #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest))))
 
@@ -9,9 +9,9 @@
   "Creates a ripemd-160 hash from byte input."
   [ba]
   #?(:cljs (-> ba
-               sjcl-bytes/toBits
+               codecBytes/toBits
                js-ripemd160/hash
-               sjcl-bytes/fromBits)
+               codecBytes/fromBits)
      :clj  (let [d (RIPEMD160Digest.)
                  _ (.update d ba 0 (count ba))
                  o (byte-array (.getDigestSize d))]

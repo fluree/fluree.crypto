@@ -1,3 +1,9 @@
+
+
+goog.provide('sjcl.crypt.scrypt');
+goog.require('sjcl.exception');
+goog.require('sjcl.misc.pbkdf2');
+
 /** scrypt Password-Based Key-Derivation Function.
  *
  * @param {bitArray|String} password  The password.
@@ -13,11 +19,6 @@
  *
  * @return {bitArray} The derived key.
  */
-
- goog.provide('sjcl.crypt.scrypt');
- goog.require('sjcl.exception');
- goog.require('sjcl.misc.pbkdf2');
-
 sjcl.crypt.scrypt = function (password, salt, N, r, p, length, Prff) {
   var SIZE_MAX = Math.pow(2, 32) - 1,
       self = sjcl.crypt.scrypt;

@@ -1,34 +1,30 @@
 (ns fluree.crypto.sha3
   (:refer-clojure :exclude [hash])
-  #?(:cljs (:require [sha3 :as js-sha3]))
+  (:require [alphabase.core :as alphabase]
+            #?@(:cljs [[jssha3 :as jssha3]]))
   #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest SHA256Digest SHA3Digest GeneralDigest))))
 
 
-(defn hash
+;; could support other hash sizes besides 256 and 512 with existing code
+(defn ^:export hash
   [ba hash-size]
   (assert (#{256 512} hash-size))
-  (let [digest #?(:clj (doto (SHA3Digest. hash-size)
-                         (.reset)
-                         (.update ba 0 (count ba)))
-                  :cljs (doto (js-sha3/SHA3. hash-size)
-                          (.update ba)))]
-    #?(:clj  (let [hash-ba (byte-array (.getDigestSize digest))]
+  #?(:clj  (let [digest (doto (SHA3Digest. hash-size)
+                          (.reset)
+                          (.update ba 0 (count ba)))]
+             (let [hash-ba (byte-array (.getDigestSize digest))]
                (.doFinal digest hash-ba 0)
-               hash-ba)
-       :cljs (.digest digest))))
+               hash-ba))
+     :cljs (jssha3/sha3 hash-size ba)))
 
 
 (defn ^:export sha3-256
-  "Create a sha3 hash"
+  "Create a sha3-256 hash"
   [ba]
-  (let [ba #?(:clj ba
-              :cljs (if (string? ba) ba (alphabase.core/bytes->string ba)))]
-    (hash ba 256)))
+  (hash ba 256))
 
 
 (defn ^:export sha3-512
-  "Create a sha3 hash"
+  "Create a sha3-512 hash"
   [ba]
-  (let [ba #?(:clj ba
-              :cljs (if (string? ba) ba (alphabase.core/bytes->string ba)))]
-    (hash ba 512)))
+  (hash ba 512))

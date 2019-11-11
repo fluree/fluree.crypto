@@ -17,3 +17,4 @@ figwheel_server.log
 *.iml
 out
 .cpcache
+/resources/build/*

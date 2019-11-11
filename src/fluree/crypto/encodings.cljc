@@ -35,7 +35,7 @@
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
   [ba]
   #?(:clj  (BigInteger. ba)
-     :cljs (-> ba codecBytes/toBits bn/fromBits)))
+     :cljs (-> ba codecBytes/toBits (sjcl.bn.))))
 
 (defn hex->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."

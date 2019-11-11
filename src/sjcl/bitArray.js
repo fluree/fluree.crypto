@@ -30,9 +30,9 @@
  * </p>
  */
 
- goog.provide('sjcl.bitArray');
+goog.provide('sjcl.bitArray');
 
-
+sjcl.bitArray = {
   /**
    * Array slices in units of bits.
    * @param {bitArray} a The array to slice.
@@ -41,7 +41,7 @@
    * slice until the end of the array.
    * @return {bitArray} The requested slice.
    */
-  sjcl.bitArray.bitSlice = function (a, bstart, bend) {
+  bitSlice: function (a, bstart, bend) {
     a = sjcl.bitArray._shiftRight(a.slice(bstart/32), 32 - (bstart & 31)).slice(1);
     return (bend === undefined) ? a : sjcl.bitArray.clamp(a, bend-bstart);
   },
@@ -53,7 +53,7 @@
    * @param {Number} blength The length of the number to extract.
    * @return {Number} The requested slice.
    */
-   sjcl.bitArray.extract = function(a, bstart, blength) {
+   extract: function(a, bstart, blength) {
     // FIXME: this Math.floor is not necessary at all, but for some reason
     // seems to suppress a bug in the Chromium JIT.
     var x, sh = Math.floor((-bstart-blength) & 31);
@@ -73,7 +73,7 @@
    * @param {bitArray} a2 The second array.
    * @return {bitArray} The concatenation of a1 and a2.
    */
-   sjcl.bitArray.concat = function (a1, a2) {
+   concat: function (a1, a2) {
     if (a1.length === 0 || a2.length === 0) {
       return a1.concat(a2);
     }
@@ -91,7 +91,7 @@
    * @param {bitArray} a The array.
    * @return {Number} The length of a, in bits.
    */
-   sjcl.bitArray.bitLength = function (a) {
+   bitLength: function (a) {
     var l = a.length, x;
     if (l === 0) { return 0; }
     x = a[l - 1];
@@ -104,7 +104,7 @@
    * @param {Number} len The length to truncate to, in bits.
    * @return {bitArray} A new array, truncated to len bits.
    */
-   sjcl.bitArray.clamp = function (a, len) {
+   clamp: function (a, len) {
     if (a.length * 32 < len) { return a; }
     a = a.slice(0, Math.ceil(len / 32));
     var l = a.length;
@@ -122,7 +122,7 @@
    * @param {Number} [_end=0] Pass 1 if x has already been shifted to the high side.
    * @return {Number} The partial word.
    */
-   sjcl.bitArray.partial = function (len, x, _end) {
+   partial: function (len, x, _end) {
     if (len === 32) { return x; }
     return (_end ? x|0 : x << (32-len)) + len * 0x10000000000;
   },
@@ -132,7 +132,7 @@
    * @param {Number} x The partial word.
    * @return {Number} The number of bits used by the partial word.
    */
-   sjcl.bitArray.getPartial = function (x) {
+   getPartial: function (x) {
     return Math.round(x/0x10000000000) || 32;
   },
 
@@ -142,7 +142,7 @@
    * @param {bitArray} b The second array.
    * @return {boolean} true if a == b; false otherwise.
    */
-   sjcl.bitArray.equal = function (a, b) {
+   equal: function (a, b) {
     if (sjcl.bitArray.bitLength(a) !== sjcl.bitArray.bitLength(b)) {
       return false;
     }
@@ -160,7 +160,7 @@
    * @param {bitArray} [out=[]] An array to prepend to the output.
    * @private
    */
-   sjcl.bitArray._shiftRight = function (a, shift, carry, out) {
+   _shiftRight: function (a, shift, carry, out) {
     var i, last2=0, shift2;
     if (out === undefined) { out = []; }
 
@@ -185,7 +185,7 @@
   /** xor a block of 4 words together.
    * @private
    */
-   sjcl.bitArray._xor4 = function(x,y) {
+   _xor4: function(x,y) {
     return [x[0]^y[0],x[1]^y[1],x[2]^y[2],x[3]^y[3]];
   },
 
@@ -194,7 +194,7 @@
    * @param {sjcl.bitArray} a word array
    * @return {sjcl.bitArray} byteswapped array
    */
-   sjcl.bitArray.byteswapM = function(a) {
+   byteswapM: function(a) {
     var i, v, m = 0xff00;
     for (i = 0; i < a.length; ++i) {
       v = a[i];
@@ -202,3 +202,4 @@
     }
     return a;
   }
+}

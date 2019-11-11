@@ -36,11 +36,11 @@
    (encrypt raw salt n r p 32))
   ([raw salt n r p dk-len]
     #?(:clj  (SCrypt/scrypt raw salt n r p dk-len)
-       :cljs (let [rawBits  (sjcl.codec.bytes/toBits raw)
-                   saltBits (sjcl.codec.bytes/toBits salt)
+       :cljs (let [rawBits  (codecBytes/toBits raw)
+                   saltBits (codecBytes/toBits salt)
                    length (* 8 dk-len)
                    res (sjcl.crypt.scrypt. rawBits saltBits n r p length)]
-               (sjcl.codec.bytes/fromBits res)))))
+               (codecBytes/fromBits res)))))
 
 
 (defn check

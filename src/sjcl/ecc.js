@@ -437,28 +437,39 @@ sjcl.ecc.deserialize = function (key) {
   if (types.indexOf(key.type) === -1) { throw new sjcl.exception.invalid("invalid type"); }
 
   var curve = sjcl.ecc.curves[key.curve];
+  var secretKeyConstructor;
+  var publicKeyConstructor;
+
+  switch (key.type) {
+    case "elGamal":
+        secretKeyConstructor = sjcl.ecc.elGamal.secretKey;
+        publicKeyConstructor = sjcl.ecc.elGamal.publicKey;
+        break;
+    case "ecdsa":
+        secretKeyConstructor = sjcl.ecc.ecdsa.secretKey;
+        publicKeyConstructor = sjcl.ecc.ecdsa.publicKey;
+        break;
+  }
 
   if (key.secretKey) {
     if (!key.exponent) { throw new sjcl.exception.invalid("invalid exponent"); }
     var exponent = new sjcl.bn(key.exponent);
-    return new sjcl.ecc[key.type].secretKey(curve, exponent);
+    return new secretKeyConstructor(curve, exponent);
   } else {
     if (!key.point) { throw new sjcl.exception.invalid("invalid point"); }
 
     var point = curve.fromBits(sjcl.codec.hex.toBits(key.point));
-    return new sjcl.ecc[key.type].publicKey(curve, point);
+    return new publicKeyConstructor(curve, point);
   }
 };
 
-/** our basicKey classes
-*/
-sjcl.ecc.basicKey = {
+
   /** ecc publicKey.
   * @constructor
   * @param {curve} curve the elliptic curve
   * @param {point} point the point on the curve
   */
-  publicKey: function(curve, point) {
+  function basicKeyPublicKey(curve, point) {
     this._curve = curve;
     this._curveBitLength = curve.r.bitLength();
     if (point instanceof Array) {
@@ -487,14 +498,22 @@ sjcl.ecc.basicKey = {
       var y = sjcl.bitArray.bitSlice(pointbits, len/2);
       return { x: x, y: y };
     };
-  },
+  };
+
+/** our basicKey classes
+*/
+sjcl.ecc.basicKey = {
+    publicKey: basicKeyPublicKey
+};
+
+
 
   /** ecc secretKey
   * @constructor
   * @param {curve} curve the elliptic curve
   * @param exponent
   */
-  secretKey: function(curve, exponent) {
+  sjcl.ecc.basicKey.secretKey = function(curve, exponent) {
     this._curve = curve;
     this._curveBitLength = curve.r.bitLength();
     this._exponent = exponent;
@@ -516,8 +535,7 @@ sjcl.ecc.basicKey = {
     this.get = function () {
       return this._exponent.toBits();
     };
-  }
-};
+  };
 
 /** @private */
 sjcl.ecc.basicKey.generateKeys = function(cn) {
@@ -533,37 +551,36 @@ sjcl.ecc.basicKey.generateKeys = function(cn) {
     sec = sec || sjcl.bn.random(curve.r, paranoia);
 
     var pub = curve.G.mult(sec);
-    return { pub: new sjcl.ecc[cn].publicKey(curve, pub),
-             sec: new sjcl.ecc[cn].secretKey(curve, sec) };
+    var secretKeyConstructor;
+    var publicKeyConstructor;
+
+    switch (cn) {
+      case "elGamal":
+          secretKeyConstructor = sjcl.ecc.elGamal.secretKey;
+          publicKeyConstructor = sjcl.ecc.elGamal.publicKey;
+          break;
+      case "ecdsa":
+          secretKeyConstructor = sjcl.ecc.ecdsa.secretKey;
+          publicKeyConstructor = sjcl.ecc.ecdsa.publicKey;
+          break;
+    }
+
+    return { pub: new publicKeyConstructor(curve, pub),
+             sec: new secretKeyConstructor(curve, sec) };
   };
 };
 
-/** elGamal keys */
-sjcl.ecc.elGamal = {
-  /** generate keys
-  * @function
-  * @param curve
-  * @param {int} paranoia Paranoia for generation (default 6)
-  * @param {secretKey} sec secret Key to use. used to get the publicKey for ones secretKey
-  */
-  generateKeys: sjcl.ecc.basicKey.generateKeys("elGamal"),
+
   /** elGamal publicKey.
   * @constructor
   * @augments sjcl.ecc.basicKey.publicKey
   */
-  publicKey: function (curve, point) {
-    sjcl.ecc.basicKey.publicKey.apply(this, arguments);
-  },
-  /** elGamal secretKey
-  * @constructor
-  * @augments sjcl.ecc.basicKey.secretKey
-  */
-  secretKey: function (curve, exponent) {
-    sjcl.ecc.basicKey.secretKey.apply(this, arguments);
-  }
-};
+function elGamalPublicKey(curve, point) {
+                             sjcl.ecc.basicKey.publicKey.apply(this, arguments);
+                           };
 
-sjcl.ecc.elGamal.publicKey.prototype = {
+
+elGamalPublicKey.prototype = {
   /** Kem function of elGamal Public Key
   * @param paranoia paranoia to use for randomization.
   * @return {object} key and tag. unkem(tag) with the corresponding secret key results in the key returned.
@@ -580,7 +597,31 @@ sjcl.ecc.elGamal.publicKey.prototype = {
   }
 };
 
-sjcl.ecc.elGamal.secretKey.prototype = {
+
+  /** elGamal secretKey
+  * @constructor
+  * @augments sjcl.ecc.basicKey.secretKey
+  */
+  function elGamalSecretKey(curve, exponent) {
+    sjcl.ecc.basicKey.secretKey.apply(this, arguments);
+  };
+
+/** elGamal keys */
+sjcl.ecc.elGamal = {
+  /** generate keys
+  * @function
+  * @param curve
+  * @param {int} paranoia Paranoia for generation (default 6)
+  * @param {secretKey} sec secret Key to use. used to get the publicKey for ones secretKey
+  */
+  generateKeys: sjcl.ecc.basicKey.generateKeys("elGamal"),
+  publicKey: elGamalPublicKey,
+  secretKey: elGamalSecretKey
+};
+
+
+
+elGamalSecretKey.prototype = {
   /** UnKem function of elGamal Secret Key
   * @param {bitArray} tag The Tag to decrypt.
   * @return {bitArray} decrypted key.
@@ -644,10 +685,10 @@ sjcl.ecc.ecdsa.publicKey.prototype = {
     var w = sjcl.bitArray,
         R = this._curve.r,
         l = this._curveBitLength,
-        r = sjcl.bn.fromBits(w.bitSlice(rs,0,l)),
-        ss = sjcl.bn.fromBits(w.bitSlice(rs,l,2*l)),
+        r = new sjcl.bn(w.bitSlice(rs,0,l)),
+        ss = new sjcl.bn(w.bitSlice(rs,l,2*l)),
         s = fakeLegacyVersion ? ss : ss.inverseMod(R),
-        hG = sjcl.bn.fromBits(hash).mul(s).mod(R),
+        hG = new sjcl.bn(hash).mul(s).mod(R),
         hA = r.mul(s).mod(R),
         r2 = this._curve.G.mult2(hG, hA, this._point).x;
     if (r.equals(0) || ss.equals(0) || r.greaterEquals(R) || ss.greaterEquals(R) || !r2.equals(r)) {
@@ -688,7 +729,7 @@ sjcl.ecc.ecdsa.secretKey.prototype = {
         l  = R.bitLength(),
         k  = fixedKForTesting || sjcl.bn.random(R.sub(1), paranoia).add(1),
         r  = this._curve.G.mult(k).x.mod(R),
-        ss = sjcl.bn.fromBits(hash).add(r.mul(this._exponent)),
+        ss = new sjcl.bn(hash).add(r.mul(this._exponent)),
         s  = fakeLegacyVersion ? ss.inverseMod(R).mul(k).mod(R)
              : ss.mul(k.inverseMod(R)).mod(R);
     return sjcl.bitArray.concat(r.toBits(l), s.toBits(l));

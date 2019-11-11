@@ -80,12 +80,10 @@
   ([x] (sha3-256 x :hex))
   ([x output-format] (sha3-256 x output-format (coerce-input-format x)))
   ([x output-format input-format]
-    #?(:clj  (-> x
-                 (alphabase/base-to-byte-array input-format)
-                 sha3/sha3-256
-                 (alphabase/byte-array-to-base (keyword output-format)))
-       :cljs (-> x sha3/sha3-256
-                 (alphabase/byte-array-to-base (keyword output-format))))))
+   (-> x
+       (alphabase/base-to-byte-array input-format)
+       sha3/sha3-256
+       (alphabase/byte-array-to-base (keyword output-format)))))
 
 (defn ^:export sha3-256-normalize
   "sha3-256 hash of provided string after normalizing string."
@@ -146,7 +144,7 @@
   (-> (secp256k1/public-key-from-private private-key)
       secp256k1/format-key-pair
       #?(:clj  :public
-         :cljs .-public)))
+         :cljs (aget "public"))))
 
 (defn ^:export account-id-from-private
   [private-key]
@@ -196,6 +194,12 @@
   (let [byte-msg      (string->byte-array message)
         byte-encryped (alphabase/base-to-byte-array encrypted :hex)]
     (apply scrypt/check byte-msg byte-encryped args)))
+
+
+(defn ^:export random-bytes
+  "Generates n random bytes."
+  [n]
+  (scrypt/random-bytes n))
 
 
 (comment

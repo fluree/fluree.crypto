@@ -5,6 +5,13 @@
  * @author Dan Boneh
  */
 
+
+
+goog.provide('sjcl.misc.pbkdf2');
+goog.require('sjcl.exception');
+goog.require('sjcl.codec.utf8String');
+goog.require('sjcl.misc.hmac');
+
 /** Password-Based Key-Derivation Function, version 2.0.
  *
  * Generate keys from passwords using PBKDF2-HMAC-SHA256.
@@ -19,12 +26,6 @@
  * @param {Object} [Prff=sjcl.misc.hmac] The pseudorandom function family.
  * @return {bitArray} the derived key.
  */
-
- goog.provide('sjcl.misc.pbkdf2');
- goog.require('sjcl.exception');
- goog.require('sjcl.codec.utf8String');
- goog.require('sjcl.misc.hmac');
-
 sjcl.misc.pbkdf2 = function (password, salt, count, length, Prff) {
                     count = count || 10000;
 

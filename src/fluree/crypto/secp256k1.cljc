@@ -60,12 +60,12 @@ public key, hex encoded."
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair) :cljs (.-private pair))
-        public #?(:clj  (:public pair) :cljs (.-public pair))
+  (let [private #?(:clj (:private pair) :cljs (aget pair "private"))
+        public #?(:clj  (:public pair) :cljs (aget pair "public"))
         x #?(:clj       (-> public .getAffineXCoord .toBigInteger (.toString 16))
-             :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
+             :cljs (-> public (aget "x") .toString (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
-             :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))
+             :cljs (-> public (aget "y") .toString (.replace #"^0x" "") encodings/pad-hex))
         pair-hex        {:private (encodings/biginteger->hex private)
                          :public  (encodings/x962-encode x y)}]
 
@@ -126,6 +126,18 @@ public key, hex encoded."
 ;      (.update d (to-bytes datum)))
 ;    (.digest d)))
 
+(defn ^:export new-private-key
+  "Generates a new random private key."
+  []
+  #?(:clj  (-> (ECKeyPairGenerator.)
+               (doto (.init (ECKeyGenerationParameters. secp256k1 (SecureRandom.))))
+               .generateKeyPair .getPrivate .getD)
+     :cljs (-> (ecc/ecdsa.generateKeys secp256k1)
+               (.-sec)
+               (.get)
+               (sjcl.bn.))))
+
+
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
   Returns map/object with two keys:
@@ -133,15 +145,7 @@ public key, hex encoded."
    - public - a curve point
 
    If a private key is provided, must be in either hex string or BigInteger (clj) bignumber (cljs)."
-  ([]
-   (let [private #?(:clj (-> (ECKeyPairGenerator.)
-                             (doto (.init (ECKeyGenerationParameters. secp256k1 (SecureRandom.))))
-                             .generateKeyPair .getPrivate .getD)
-                    :cljs (-> (ecc/ecdsa.generateKeys secp256k1)
-                              (.-sec)
-                              (.get)
-                              (bn/fromBits)))]
-     (generate-key-pair* private)))
+  ([] (generate-key-pair* (new-private-key)))
   ([private]
    (public-key-from-private private)))
 
@@ -202,8 +206,10 @@ public key, hex encoded."
 (defn ^:export sign-hash
   [hash-ba private-bn recovery-byte?]
   (let [rng           (deterministic-generate-k hash-ba private-bn secp256k1)
-        n #?(:clj     (.getN secp256k1) :cljs (.-r secp256k1))
-        z #?(:clj     (BigInteger. 1 hash-ba) :cljs (-> hash-ba codecBytes/toBits bn/fromBits))
+        n #?(:clj     (.getN secp256k1)
+             :cljs (.-r secp256k1))
+        z #?(:clj     (BigInteger. 1 hash-ba)
+             :cljs (-> hash-ba codecBytes/toBits (sjcl.bn.)))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
