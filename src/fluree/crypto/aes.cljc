@@ -43,10 +43,10 @@
 (defn ^:export decrypt
   "Decrypts with AES/CBC/PKCS{5/7}Padding by hashing a 256 bit key out of key.
   You can provide an alternate initial vector of unsigned(!) bytes of size 16 for CBC."
-  [x key & {:keys [iv input-format output-format]
-            :or   {iv            [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]
-                   input-format  :hex
-                   output-format :string}}]
+  [x key & [{:keys [iv input-format output-format]
+             :or   {iv            [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42]
+                    input-format  :hex
+                    output-format :string}}]]
   (let [key-ba (if (string? key)
                  (util/hash-string-key key 32)
                  key)
@@ -68,4 +68,5 @@
                         (.decode pkcs7 16 (.decrypt cbc x-ba (clj->js iv)))))]
     (case (keyword output-format)
       :none decrypt-ba
+      :hex (alphabase/bytes->hex decrypt-ba)
       :string (alphabase/bytes->string decrypt-ba))))
