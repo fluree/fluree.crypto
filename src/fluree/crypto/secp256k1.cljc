@@ -4,8 +4,7 @@
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
-            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-                       [sjcl.ecc :as ecc]
+            #?@(:cljs [[sjcl.ecc :as ecc]
                        [sjcl.bn :as bn]
                        [sjcl.codec.hex :as codecHex]
                        [sjcl.codec.bytes :as codecBytes]])
