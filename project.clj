@@ -13,7 +13,8 @@
                  [com.lambdaworks/scrypt "1.4.0"]
                  ;; other crypto
                  [org.bouncycastle/bcprov-jdk15on "1.55"]]
-  :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]]
+  :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
+            [lein-doo "0.1.11"]]
 
   :source-paths ["src"]
   :cljsbuild {:builds
@@ -57,12 +58,24 @@
                                :npm-deps      {:scrypt-js "2.0.4"}
                                :libs          ["src/goog/crypt/pkcs7.js"
                                                "src/sjcl"
+                                               "src/jssha3/sha3.js"]}}
+               {:id           "ci-tests"
+                :source-paths ["src test"]
+                :compiler     {:main          fluree.test-runner
+                               :output-to     "resources/build/ci/testrunner.js"
+                               :output-dir    "resources/build/ci/out"
+                               :optimizations :advanced
+                               :pretty-print  false
+                               :pseudo-names  true
+                               :install-deps  true
+                               :npm-deps      {:scrypt-js "2.0.4"}
+                               :libs          ["src/goog/crypt/pkcs7.js"
+                                               "src/sjcl"
                                                "src/jssha3/sha3.js"]}}]}
-  :repl-options {:init-ns fluree.crypto})
+  :repl-options {:init-ns fluree.crypto}
 
+  :profiles
+  {:doo
+   {:dependencies
+    [[doo "0.1.11"]]}})
 
-;
-;
-;
-;:output-to "resources/public/js/compiled/fluree-crypto.js"
-;:output-dir "resources/public/js/compiled/out"

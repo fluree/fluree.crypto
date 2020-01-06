@@ -1,7 +1,22 @@
 {
+  "scripts": {
+    "ci-clj": "lein test",
+    "ci-cljs": "lein doo chrome-headless ci-tests"
+  },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
+    "chai": "^4.2.0",
     "elliptic": "^6.5.0",
+    "karma": "^4.4.1",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-cljs-test": "^0.1.0",
+    "karma-firefox-launcher": "^1.2.0",
+    "karma-ie-launcher": "^1.0.0",
+    "karma-mocha": "^1.3.0",
+    "karma-opera-launcher": "^1.0.0",
+    "karma-safari-launcher": "^1.0.0",
+    "mocha": "^6.2.2",
     "ripemd160": "^2.0.2",
     "scrypt-js": "^2.0.4",
     "sha3": "^2.0.6",
