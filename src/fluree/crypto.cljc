@@ -124,13 +124,13 @@
 (defn ^:export aes-encrypt
   ([x iv key] (aes-encrypt x iv key :hex))
   ([x iv key output-format]
-   (aes/encrypt x key :iv iv :output-format output-format)))
+   (aes/encrypt x key {:iv iv :output-format output-format})))
 
 (defn ^:export aes-decrypt
   ([x iv key] (aes-decrypt x iv key :string :hex))
   ([x iv key output-format] (aes-decrypt x iv key output-format :hex))
   ([x iv key output-format input-format]
-   (aes/decrypt x key :iv iv :input-format input-format :output-format output-format)))
+   (aes/decrypt x key {:iv iv :input-format input-format :output-format output-format})))
 
 (defn ^:export generate-key-pair
   ([] (secp256k1/generate-key-pair))
@@ -259,7 +259,9 @@
   ;; CLJ + CLJS
   ;; 668cd07d1a17cc7a8a0390cf017ac7ef
 
-  (aes-decrypt (aes-encrypt "hi" "there") "there")
+  (def iv (random-bytes 16))
+  (aes-encrypt "hi" iv "there" :none)
+  (aes-decrypt (aes-encrypt "hi" iv "there") iv "there")
   (aes-decrypt "668cd07d1a17cc7a8a0390cf017ac7ef" "there")
   ;; Working in CLJS + CLJ
 
