@@ -3,7 +3,7 @@ FROM clojure:lein-2.9.3
 RUN mkdir -p /usr/src/fluree.crypto
 WORKDIR /usr/src/fluree.crypto
 
-RUN apt-get update && apt-get install -y nodejs
+RUN apt-get update && apt-get install -y nodejs npm
 
 COPY project.clj ./
 RUN lein deps
