@@ -1,8 +1,8 @@
-(defproject fluree.crypto "0.3.2"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
-            :url  "https://www.eclipse.org/legal/epl-2.0/"}
+(defproject fluree/crypto "0.3.2-SNAPSHOT"
+  :description "Cryptography library for Fluree"
+  :url "https://github.com/fluree/fluree.crypto"
+  :license {:name "The MIT License"
+            :url  "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.clojure/clojurescript "1.10.520"]
                  [fluree/alphabase "3.2.1"]
@@ -15,6 +15,9 @@
                  [org.bouncycastle/bcprov-jdk15on "1.55"]]
   :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
             [lein-doo "0.1.11"]]
+
+  :deploy-repositories [["releases"  :clojars
+                         "snapshots" :clojars]]
 
   :source-paths ["src"]
   :cljsbuild {:builds
