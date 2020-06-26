@@ -1,4 +1,4 @@
-(defproject fluree/crypto "0.3.3"
+(defproject fluree/crypto "0.3.4-SNAPSHOT"
   :description "Cryptography library for Fluree"
   :url "https://github.com/fluree/fluree.crypto"
   :license {:name "The MIT License"
