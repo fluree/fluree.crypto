@@ -63,7 +63,7 @@
                                                "src/sjcl"
                                                "src/jssha3/sha3.js"]}}
                {:id           "ci-tests"
-                :source-paths ["src test"]
+                :source-paths ["src" "test"]
                 :compiler     {:main          fluree.test-runner
                                :output-to     "resources/build/ci/testrunner.js"
                                :output-dir    "resources/build/ci/out"
