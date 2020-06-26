@@ -11,7 +11,6 @@
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
-
 (defn ^:export normalize-string
   "Normalizes string for consistent hashing."
   [s]
@@ -298,9 +297,9 @@
   ;; CLJ  + CLJS
   ;; "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4"
 
-  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1)
+  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1))
   ;; CLJ + CLJS
-  )
+
 
 
 
