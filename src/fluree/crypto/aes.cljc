@@ -1,14 +1,23 @@
 (ns fluree.crypto.aes
   (:require [alphabase.core :as alphabase]
-            [fluree.crypto.sha3 :as sha3]
             [fluree.crypto.util :as util]
             #?@(:cljs [[goog.crypt.Aes]
                        [goog.crypt.Cbc]
-                       [goog.crypt.Pkcs7]]))
+                       [fluree.crypto.pkcs7 :as pkcs7]]))
   #?(:clj (:import (java.security SecureRandom)
                    (javax.crypto KeyGenerator Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
 
+(defn encrypt* [iv key-ba ba]
+  #?(:clj  (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
+                 spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
+                 cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
+             (.init cipher Cipher/ENCRYPT_MODE spec iv)
+             (.doFinal cipher ba))
+     :cljs (let [cipher (goog.crypt.Aes. key-ba)
+                 cbc    (goog.crypt.Cbc. cipher)
+                 padded (pkcs7/encode 16 ba)]
+             (.encrypt cbc padded (clj->js iv)))))
 
 (defn ^:export encrypt
   "Encrypts with AES/CBC/PKCS{5/7}Padding by hashing a 256 bit key out
@@ -22,23 +31,21 @@
         ba     (if (string? x)
                  (alphabase/string->bytes x)
                  x)
-        encrypted #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
-                     cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
-                 (.init cipher Cipher/ENCRYPT_MODE spec iv)
-                 (.doFinal cipher ba))
-                     :cljs (let [cipher (goog.crypt.Aes. key-ba)
-                                 cbc    (goog.crypt.Cbc. cipher)
-                                 pkcs7  (goog.crypt.Pkcs7.)
-                                 padded (.encode pkcs7 16 ba)]
-                             (.encrypt cbc padded (clj->js iv))))]
+        encrypted (encrypt* iv key-ba ba)]
     (case (keyword output-format)
       :none encrypted
       :hex (alphabase/bytes->hex encrypted)
       :base64 (alphabase/bytes->base64 encrypted))))
 
-
+(defn decrypt* [iv key-ba x-ba]
+  #?(:clj  (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
+                 spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
+                 cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
+             (.init cipher Cipher/DECRYPT_MODE spec iv)
+             (.doFinal cipher x-ba))
+     :cljs (let [cipher (goog.crypt.Aes. key-ba)
+                 cbc    (goog.crypt.Cbc. cipher)]
+             (pkcs7/decode 16 (.decrypt cbc x-ba (clj->js iv))))))
 
 (defn ^:export decrypt
   "Decrypts with AES/CBC/PKCS{5/7}Padding by hashing a 256 bit key out of key.
@@ -55,17 +62,7 @@
                    :hex (alphabase/hex->bytes x)
                    :base64 (alphabase/base64->bytes x))
                  x)
-        decrypt-ba #?(:clj
-               (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
-                     spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")
-                     cipher (Cipher/getInstance "AES/CBC/PKCS5Padding")]
-                 (.init cipher Cipher/DECRYPT_MODE spec iv)
-                 (.doFinal cipher x-ba))
-                      :cljs
-                      (let [cipher (goog.crypt.Aes. key-ba)
-                            cbc    (goog.crypt.Cbc. cipher)
-                            pkcs7  (goog.crypt.Pkcs7.)]
-                        (.decode pkcs7 16 (.decrypt cbc x-ba (clj->js iv)))))]
+        decrypt-ba (decrypt* iv key-ba x-ba)]
     (case (keyword output-format)
       :none decrypt-ba
       :hex (alphabase/bytes->hex decrypt-ba)

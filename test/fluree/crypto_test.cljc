@@ -5,8 +5,8 @@
        :cljs [cljs.test :refer-macros [deftest is testing]])
     [fluree.crypto :as crypto]
     [alphabase.core :as alphabase]
-    [fluree.crypto.ripemd :as ripemd]
-    ))
+    [fluree.crypto.ripemd :as ripemd]))
+
 
 
 ;http://blog.raphinou.com/2009/03/generate-random-string-in-clojure.html

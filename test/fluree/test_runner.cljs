@@ -3,7 +3,9 @@
     [doo.runner :refer [doo-tests]])
   (:require
     [fluree.crypto-test]
+    [fluree.crypto.pkcs7-test]
     [doo.runner]))
 
 (doo-tests
-  'fluree.crypto-test)
+  'fluree.crypto-test
+  'fluree.crypto.pkcs7-test)
