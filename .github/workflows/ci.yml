@@ -13,6 +13,6 @@ jobs:
       - uses: actions/checkout@v2
       - run: docker build -t fluree/crypto .
       - name: Run CLJ tests
-        run: docker run --rm fluree/crypto lein test
+        run: script/run-in-docker.sh lein test
       - name: Run CLJS tests
-        run: docker run --rm fluree/crypto npm run ci-cljs
+        run: script/run-in-docker.sh npm run ci-cljs
