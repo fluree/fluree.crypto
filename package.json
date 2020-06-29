@@ -1,7 +1,7 @@
 {
   "scripts": {
     "ci-clj": "lein test",
-    "ci-cljs": "lein doo chrome-headless ci-tests"
+    "ci-cljs": "lein doo chrome-headless ci-tests once"
   },
   "dependencies": {
     "@cljs-oss/module-deps": "^1.1.1",
