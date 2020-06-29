@@ -5,4 +5,4 @@ if [[ ! -f docker-chrome-seccomp.json ]]; then
 fi
 
 docker build --quiet --tag fluree/crypto .
-docker run --security-opt seccomp=docker-chrome-seccomp.json --rm -ti fluree/crypto "$@"
+docker run --security-opt seccomp=docker-chrome-seccomp.json --rm fluree/crypto "$@"
