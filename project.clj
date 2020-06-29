@@ -4,7 +4,7 @@
   :license {:name "The MIT License"
             :url  "http://opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [org.clojure/clojurescript "1.10.520"]
+                 [org.clojure/clojurescript "1.10.773"]
                  [fluree/alphabase "3.2.1"]
                  ;; sha3
                  [org.bouncycastle/bcprov-jdk15on "1.55"]
@@ -13,7 +13,7 @@
                  [com.lambdaworks/scrypt "1.4.0"]
                  ;; other crypto
                  [org.bouncycastle/bcprov-jdk15on "1.55"]]
-  :plugins [[lein-cljsbuild "1.1.7" :exclusions [[org.clojure/clojure]]]
+  :plugins [[lein-cljsbuild "1.1.8" :exclusions [[org.clojure/clojure]]]
             [lein-doo "0.1.11"]]
 
   :deploy-repositories [["releases"  :clojars
