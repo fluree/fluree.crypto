@@ -4,12 +4,9 @@
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
-            #?@(:cljs [[sjcl.ecc :as ecc]
-                       [sjcl.bn :as bn]
-                       [sjcl.codec.hex :as codecHex]
-                       [sjcl.codec.bytes :as codecBytes]])
-            [fluree.crypto.ripemd :as ripemd]
-            )
+            #?@(:cljs [["@fluree/sjcl" :as sjcl]])
+            [fluree.crypto.ripemd :as ripemd])
+
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
               (java.security SecureRandom)
@@ -23,9 +20,8 @@
               (org.bouncycastle.asn1 ASN1Integer)
               (org.bouncycastle.math.ec ECAlgorithms))))
 
-
 (defonce ^:private secp256k1
-         #?(:cljs ecc/curves.k256
+         #?(:cljs sjcl.ecc.curves.k256
             :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
                     (ECDomainParameters. (.getCurve params)
                                          (.getG params)
@@ -84,8 +80,6 @@ public key, hex encoded."
        :cljs #js {:private private-bn
                   :public  (.mult (.-G secp256k1) private-bn)})))
 
-
-
 (defn get-sin-from-public-key
   "Generate a SIN from a public key"
   [pub-key & {:keys [output-format]
@@ -131,11 +125,10 @@ public key, hex encoded."
   #?(:clj  (-> (ECKeyPairGenerator.)
                (doto (.init (ECKeyGenerationParameters. secp256k1 (SecureRandom.))))
                .generateKeyPair .getPrivate .getD)
-     :cljs (-> (ecc/ecdsa.generateKeys secp256k1)
+     :cljs (-> (sjcl.ecc.ecdsa.generateKeys secp256k1)
                (.-sec)
                (.get)
                (sjcl.bn.))))
-
 
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
@@ -208,7 +201,7 @@ public key, hex encoded."
         n #?(:clj     (.getN secp256k1)
              :cljs (.-r secp256k1))
         z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (-> hash-ba codecBytes/toBits (sjcl.bn.)))
+             :cljs (-> hash-ba sjcl.codec.bytes.toBits (sjcl.bn.)))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
@@ -284,10 +277,10 @@ public key, hex encoded."
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
 
-            (let [g-point  (ecc/point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
-                  r-point  (ecc/point. secp256k1 (.-x R) (.-y R))
+            (let [g-point  (sjcl.ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+                  r-point  (sjcl.ecc.point. secp256k1 (.-x R) (.-y R))
                   sumOTM   (.mult2 r-point s e-inv g-point)
-                  sumPoint (ecc/point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
+                  sumPoint (sjcl.ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
               (-> (.mult sumPoint r-inv)
                   format-public-key)))))
 
@@ -341,8 +334,8 @@ public key, hex encoded."
 
 (comment
 
-  (verify "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5" "hi" "1c3045022100e81841ed32ed8c36e31dfa671cb21c1d9bdd6b581ea699b62d4201445e3fe2ea02200473ef2d72258029dae899ece3846c5e06190ce27ca3f289bf8a5cf43ef02c68")
+  (verify "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5" "hi" "1c3045022100e81841ed32ed8c36e31dfa671cb21c1d9bdd6b581ea699b62d4201445e3fe2ea02200473ef2d72258029dae899ece3846c5e06190ce27ca3f289bf8a5cf43ef02c68"))
 
-  )
+
 
 

@@ -1,10 +1,7 @@
 (ns fluree.crypto.encodings
   (:require [clojure.string :as str]
-    #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-               [sjcl.ecc :as ecc]
-               [sjcl.bn :as bn]
-               [sjcl.codec.hex :as codecHex]
-               [sjcl.codec.bytes :as codecBytes]])
+            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
+                       ["@fluree/sjcl" :as sjcl]])
             [alphabase.core :as alphabase])
   #?(:clj
      (:import (org.bouncycastle.asn1 ASN1Integer DERSequenceGenerator ASN1InputStream)
@@ -28,14 +25,14 @@
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
   ([bn] (biginteger->bytes bn nil))
   ([bn l]
-    #?(:clj  (-> bn .toByteArray)
-       :cljs (-> bn (.toBits l) codecBytes/fromBits))))
+   #?(:clj  (-> bn .toByteArray)
+      :cljs (-> bn (.toBits l) sjcl.codec.bytes.fromBits))))
 
 (defn bytes->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
   [ba]
   #?(:clj  (BigInteger. ba)
-     :cljs (-> ba codecBytes/toBits (sjcl.bn.))))
+     :cljs (-> ba sjcl.codec.bytes.toBits (sjcl.bn.))))
 
 (defn hex->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
@@ -161,8 +158,8 @@
                                  modulus)
                    y           (if (= y-even? (bn-even? y-candidate))
                                  y-candidate
-                                 (.sub modulus y-candidate))
-                   ]
+                                 (.sub modulus y-candidate))]
+
                #js {:x (.initWith (sjcl.bn.) x-coordinate)
                     :y (.initWith (sjcl.bn.) y)})))
 
@@ -267,11 +264,11 @@
                     byte->int)))
 
       (= "30" first-byte)
-            (DER-decode-standard asn1)
+      (DER-decode-standard asn1)
 
-            :else
-            (throw (ex-info "Input must start with the code 30, or start with a recovery code (either 1b, 1c, 1d, or 1e)"
-                            {:argument asn1})))))
+      :else
+      (throw (ex-info "Input must start with the code 30, or start with a recovery code (either 1b, 1c, 1d, or 1e)"
+                      {:argument asn1})))))
 
 
 (defn DER-decode-ECDSA-signature
@@ -293,8 +290,8 @@
   [R S recover curve]
   #?(:cljs (let [recover 27
                  l           (-> curve .-r .bitLength)
-                 R-hex (-> R (.toBits l) codecHex/fromBits)
-                 S-hex  (-> S (.toBits l) codecHex/fromBits)
+                 R-hex (-> R (.toBits l) sjcl.codec.hex.fromBits)
+                 S-hex  (-> S (.toBits l) sjcl.codec.hex.fromBits)
                  recover-hex (.toString recover 16)
                  R-asn1      (asn1/encode-asn1-unsigned-integer-hex R-hex)
                  S-asn1      (asn1/encode-asn1-unsigned-integer-hex S-hex)]

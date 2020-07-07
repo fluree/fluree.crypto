@@ -1,8 +1,7 @@
 (ns fluree.crypto.scrypt
   (:require
     [alphabase.core :as alphabase]
-    #?@(:cljs [[sjcl.crypt.scrypt :as crypt]
-               [sjcl.codec.bytes :as codecBytes]
+    #?@(:cljs [["@fluree/sjcl" :as sjcl]
                [goog.object]]))
   #?(:clj
      (:import (com.lambdaworks.crypto SCryptUtil)
@@ -35,12 +34,12 @@
   ([raw salt n r p]
    (encrypt raw salt n r p 32))
   ([raw salt n r p dk-len]
-    #?(:clj  (SCrypt/scrypt raw salt n r p dk-len)
-       :cljs (let [rawBits  (codecBytes/toBits raw)
-                   saltBits (codecBytes/toBits salt)
-                   length (* 8 dk-len)
-                   res (sjcl.crypt.scrypt. rawBits saltBits n r p length)]
-               (codecBytes/fromBits res)))))
+   #?(:clj  (SCrypt/scrypt raw salt n r p dk-len)
+      :cljs (let [rawBits  (sjcl.codec.bytes.toBits raw)
+                  saltBits (sjcl.codec.bytes.toBits salt)
+                  length (* 8 dk-len)
+                  res (sjcl.crypt.scrypt. rawBits saltBits n r p length)]
+              (sjcl.codec.bytes.fromBits res)))))
 
 
 (defn check
@@ -76,7 +75,6 @@
 
   ;57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4
 
-  (check message result mysalt)
+  (check message result mysalt))
 
 
-  )
