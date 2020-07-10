@@ -4,7 +4,7 @@ RUN mkdir -p /usr/src/fluree.crypto
 WORKDIR /usr/src/fluree.crypto
 
 # Install the tools we need to install the tools we need
-RUN apt-get update && apt-get install -y wget software-properties-common
+RUN apt-get update && apt-get install -y wget software-properties-common gnupg2
 
 # Add Chrome source for running CLJS tests
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
@@ -13,7 +13,7 @@ RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable 
 # Add node PPA to get newer versions
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
 
-RUN apt-get update && apt-get install -y nodejs google-chrome-stable
+RUN apt-get update && apt-get install -y nodejs npm google-chrome-stable
 
 # Install & cache project deps
 COPY project.clj ./
