@@ -3,22 +3,33 @@
         fluree/alphabase {:mvn/version "3.2.1"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.65.01"}
         com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
+
  :paths ["src"]
- :aliases {:cljstest
-           {:extra-paths ["test"]
-            ;; Stop using git checkout of cljs-test-runner once this PR is merged:
-            ;; https://github.com/Olical/cljs-test-runner/issues/36
-            ;; - WSM 2020/7/6
-            :extra-deps {olical/cljs-test-runner
-                         {:git/url "https://github.com/Olical/cljs-test-runner.git"
-                          :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
-            :main-opts ["-m" "cljs-test-runner.main"
-                        "-D" "doo.edn"
-                        "-c" "test-build.edn"
-                        "-x" "chrome-headless"]}
-           :cljtest
-           {:extra-paths ["test"]
-            :extra-deps {com.cognitect/test-runner
-                         {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                          :sha "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
-            :main-opts ["-m" "cognitect.test-runner"]}}}
+ :aliases
+ {:cljs
+  {:main-opts ["-m" "cljs.main" "-co" "build.edn" "-v" "-c"]}
+
+  :cljstest
+  {:extra-paths ["test"]
+   ;; Stop using git checkout of cljs-test-runner once this PR is merged:
+   ;; https://github.com/Olical/cljs-test-runner/issues/36
+   ;; - WSM 2020/7/6
+   :extra-deps {olical/cljs-test-runner
+                {:git/url "https://github.com/Olical/cljs-test-runner.git"
+                 :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
+   :main-opts ["-m" "cljs-test-runner.main"
+               "-D" "doo.edn"
+               "-c" "test-build.edn"
+               "-x" "chrome-headless"]}
+
+  :cljtest
+  {:extra-paths ["test"]
+   :extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                 :sha "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
+   :main-opts ["-m" "cognitect.test-runner"]}
+
+  :js-deps
+  {:extra-deps {com.timetraveltoaster/target-bundle-libs {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "target-bundle-libs.core"]}}}
+
