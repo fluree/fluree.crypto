@@ -1,6 +1,6 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/clojurescript {:mvn/version "1.10.773"}
-        fluree/alphabase {:mvn/version "3.2.1"}
+        com.fluree/alphabase {:mvn/version "3.2.1"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.65.01"}
         com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
 
@@ -31,5 +31,18 @@
 
   :js-deps
   {:extra-deps {com.timetraveltoaster/target-bundle-libs {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "target-bundle-libs.core"]}}}
+   :main-opts ["-m" "target-bundle-libs.core"]}
 
+  :jar
+  {:extra-deps {seancorfield/depstar {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "hf.depstar.jar" "target/fluree-crypto.jar"]}
+
+  :install
+  {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "deps-deploy.deps-deploy" "install"
+               "target/fluree-crypto.jar"]}
+
+  :deploy
+  {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "deps-deploy.deps-deploy" "deploy"
+               "target/fluree-crypto.jar"]}}}

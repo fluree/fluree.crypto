@@ -1,6 +1,6 @@
 .PHONY: cljtest cljstest test uberjar clean
 
-uberjar: target/fluree.crypto.jar
+uberjar: target/fluree-crypto.jar
 
 pom.xml: deps.edn
 	clojure -Spom
@@ -16,8 +16,14 @@ test: cljtest cljstest
 src/deps.cljs: package.json
 	clojure -A:js-deps
 
-target/fluree.crypto.jar: deps.edn pom.xml uberdeps/deps.edn src/deps.cljs src/**/* resources/**/*
-	cd uberdeps && clojure -m uberdeps.uberjar --deps-file ../deps.edn --aliases :cljs --target ../$@
+target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs src/**/*
+	clojure -A:jar
+
+install: target/fluree-crypto.jar
+	clojure -A:install
+
+deploy: target/fluree-crypto.jar
+	clojure -A:deploy
 
 clean:
 	rm -rf target

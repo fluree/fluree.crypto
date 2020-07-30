@@ -1,7 +1,7 @@
-FROM clojure:tools-deps-1.10.1.547-slim-buster
+FROM clojure:tools-deps-1.10.1.590-slim-buster
 
-RUN mkdir -p /usr/src/fluree.crypto
-WORKDIR /usr/src/fluree.crypto
+RUN mkdir -p /usr/src/fluree-crypto
+WORKDIR /usr/src/fluree-crypto
 
 # Install the tools we need to install the tools we need
 RUN apt-get update && apt-get install -y wget curl gnupg2 software-properties-common
