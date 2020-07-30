@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y nodejs google-chrome-stable
 # Install & cache project deps
 COPY deps.edn ./
 RUN clojure -A:cljtest:cljstest -Stree
-COPY package.json package-lock.json ./
+COPY package.json ./
 RUN npm i
 RUN npm i -g karma-cli
 
