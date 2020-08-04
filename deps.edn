@@ -6,10 +6,7 @@
 
  :paths ["src"]
  :aliases
- {:cljs
-  {:main-opts ["-m" "cljs.main" "-co" "build.edn" "-v" "-c"]}
-
-  :cljstest
+ {:cljstest
   {:extra-paths ["test"]
    ;; Stop using git checkout of cljs-test-runner once this PR is merged:
    ;; https://github.com/Olical/cljs-test-runner/issues/36

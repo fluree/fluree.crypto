@@ -1,7 +1,0 @@
-{:main fluree.crypto
- :output-to "out/index.js"
- :output-dir "out"
- :target :bundle
- :bundle-cmd {:none ["npx" "webpack" "out/index.js" "-o" "out/main.js" "--mode=development"]
-              :default ["npx" "webpack" "out/index.js" "-o" "out/main.js"]}
- :closure-defines {cljs.core/*global* "window"}} ;; needed for advanced
