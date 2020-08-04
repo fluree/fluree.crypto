@@ -2,8 +2,6 @@
 /out
 /cljs-test-runner-out
 .cpcache
-pom.xml
-pom.xml.asc
 *.jar
 *.class
 .hgignore
