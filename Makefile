@@ -22,6 +22,8 @@ src/deps.cljs: package.json
 install: target/fluree-crypto.jar
 	clojure -A:install
 
+# You'll need to set the env vars CLOJARS_USERNAME & CLOJARS_PASSWORD
+# (which must be a Clojars deploy token now) to use this.
 deploy: target/fluree-crypto.jar
 	clojure -A:deploy
 
