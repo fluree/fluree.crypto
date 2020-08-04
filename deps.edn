@@ -4,7 +4,7 @@
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.65.01"}
         com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
 
- :paths ["src"]
+ :paths ["src" "resources"]
  :aliases
  {:cljstest
   {:extra-paths ["test"]

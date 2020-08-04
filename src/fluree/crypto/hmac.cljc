@@ -1,10 +1,10 @@
 (ns fluree.crypto.hmac
-  (:require [alphabase.core :as alphabase]
-            #?@(:cljs [["@fluree/sjcl" :as sjcl]]))
-  #?(:clj (:import (org.bouncycastle.crypto.macs HMac)
-                   (org.bouncycastle.crypto.params KeyParameter)
-                   (org.bouncycastle.crypto.digests SHA256Digest))))
-
+  #?(:cljs
+     (:require ["@fluree/sjcl" :as sjcl]))
+  #?(:clj
+     (:import (org.bouncycastle.crypto.macs HMac)
+              (org.bouncycastle.crypto.params KeyParameter)
+              (org.bouncycastle.crypto.digests SHA256Digest))))
 
 (defn hmac-sha256
   "Returns HMAC using SHA-256 hashing. Both key and message should be bytes."

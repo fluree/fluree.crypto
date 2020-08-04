@@ -6,14 +6,18 @@
     [fluree.crypto.scrypt :as scrypt]
     [fluree.crypto.ripemd :as ripemd]
     [fluree.crypto.secp256k1 :as secp256k1]
-    #?@(:cljs [[goog.crypt :as gcrypt]])
+    #?@(:cljs [[goog.crypt :as gcrypt]
+               [goog.object :as gobj]])
     [alphabase.core :as alphabase])
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
+#?(:cljs (set! *warn-on-infer* true))
+
 (defn ^:export normalize-string
   "Normalizes string for consistent hashing."
-  [s]
+  [#?(:cljs ^js/String s
+      :clj  s)]
   #?(:clj  (Normalizer/normalize s Normalizer$Form/NFKC)
      :cljs (.normalize s "NFKC")))
 
@@ -136,7 +140,7 @@
   (-> (secp256k1/public-key-from-private private-key)
       secp256k1/format-key-pair
       #?(:clj  :public
-         :cljs (aget "public"))))
+         :cljs (gobj/get "public"))))
 
 (defn ^:export account-id-from-private
   [private-key]

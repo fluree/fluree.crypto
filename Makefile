@@ -1,6 +1,6 @@
 .PHONY: cljtest cljstest test jar clean
 
-target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs src/**/*
+target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs src/**/* resources/**/*
 	clojure -A:jar
 
 jar: target/fluree-crypto.jar

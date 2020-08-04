@@ -4,7 +4,8 @@
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
-            #?@(:cljs [["@fluree/sjcl" :as sjcl]])
+            #?@(:cljs [["@fluree/sjcl" :as sjcl]
+                       [goog.object :as gobj]])
             [fluree.crypto.ripemd :as ripemd])
 
   #?(:clj
@@ -21,7 +22,7 @@
               (org.bouncycastle.math.ec ECAlgorithms))))
 
 (defonce ^:private secp256k1
-         #?(:cljs sjcl.ecc.curves.k256
+         #?(:cljs (.. sjcl -ecc -curves -k256)
             :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
                     (ECDomainParameters. (.getCurve params)
                                          (.getG params)
@@ -55,12 +56,12 @@ public key, hex encoded."
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair) :cljs (aget pair "private"))
-        public #?(:clj  (:public pair) :cljs (aget pair "public"))
+  (let [private #?(:clj (:private pair) :cljs (gobj/get pair "private"))
+        public #?(:clj  (:public pair) :cljs (gobj/get pair "public"))
         x #?(:clj       (-> public .getAffineXCoord .toBigInteger (.toString 16))
-             :cljs (-> public (aget "x") .toString (.replace #"^0x" "") encodings/pad-hex))
+             :cljs (-> public (gobj/get "x") .toString (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
-             :cljs (-> public (aget "y") .toString (.replace #"^0x" "") encodings/pad-hex))
+             :cljs (-> public (gobj/get "y") .toString (.replace #"^0x" "") encodings/pad-hex))
         pair-hex        {:private (encodings/biginteger->hex private)
                          :public  (encodings/x962-encode x y)}]
 
@@ -72,7 +73,7 @@ public key, hex encoded."
   (let [private-bn #?(:clj (cond
                              (instance? java.math.BigInteger private) private
                              (string? private) (BigInteger. private 16))
-                      :cljs (-> (sjcl.bn.) (.initWith private)))]
+                      :cljs (-> (sjcl.bn. private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     #?(:clj  {:private private-bn
@@ -126,7 +127,7 @@ public key, hex encoded."
                (doto (.init (ECKeyGenerationParameters. secp256k1 (SecureRandom.))))
                .generateKeyPair .getPrivate .getD)
      :cljs (-> (sjcl.ecc.ecdsa.generateKeys secp256k1)
-               (.-sec)
+               (gobj/get "sec")
                (.get)
                (sjcl.bn.))))
 

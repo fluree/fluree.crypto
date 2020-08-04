@@ -1,8 +1,9 @@
 (ns fluree.crypto-test
   (:require
     [clojure.string :as str]
-    #?(:clj  [clojure.test :refer :all]
-       :cljs [cljs.test :refer-macros [deftest is testing]])
+    #?@(:clj  [[clojure.test :refer :all]]
+        :cljs [[cljs.test :refer-macros [deftest is testing]]
+               [goog.object :as gobj]])
     [fluree.crypto :as crypto]))
 
 ;http://blog.raphinou.com/2009/03/generate-random-string-in-clojure.html
@@ -90,10 +91,10 @@
     (let [kp* (crypto/generate-key-pair)
           public  (-> kp*
                       #?(:clj  :public
-                         :cljs (aget "public")))
+                         :cljs (gobj/get "public")))
           private (-> kp*
                       #?(:clj  :private
-                         :cljs (aget "private")))
+                         :cljs (gobj/get "private")))
           public' (crypto/pub-key-from-private private)]
       (is (= public public')))))
 
