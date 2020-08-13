@@ -25,14 +25,14 @@
   (apply str (take length (repeatedly random-char))))
 
 (def composed-decomposed-map
-  {(str "\u00C5")  (str "\u0041\u030a")
-   (str "\u212B")  (str "\u0041\u030a")
+  {(str "\u00C5") (str "\u0041\u030a")
+   (str "\u212B") (str "\u0041\u030a")
    (str "\u00e9") (str "\u0065\u0301")})
 
 
 (deftest normalize-string-test
   (testing "Normalize string test"
-    (let [rdm-str  (random-string 10)]
+    (let [rdm-str (random-string 10)]
 
       (is (= (count (crypto/normalize-string rdm-str)) 10))
 
@@ -88,7 +88,7 @@
 
 (deftest public-private-key-conversions
   (testing "Private key returns the same public keys"
-    (let [kp* (crypto/generate-key-pair)
+    (let [kp*     (crypto/generate-key-pair)
           public  (-> kp*
                       #?(:clj  :public
                          :cljs (gobj/get "public")))
@@ -97,6 +97,26 @@
                          :cljs (gobj/get "private")))
           public' (crypto/pub-key-from-private private)]
       (is (= public public')))))
+
+(deftest account-id-from-public-test
+  (testing "can derive account-id from public key"
+    (let [kp     (crypto/generate-key-pair)
+          public (-> kp
+                     #?(:clj  :public
+                        :cljs (gobj/get "public")))]
+      ;; TODO: What else can assert about account-ids?
+      (is (= 35
+             (count (crypto/account-id-from-public public)))))))
+
+(deftest account-id-from-private-test
+  (testing "can derive account-id from private key"
+    (let [kp      (crypto/generate-key-pair)
+          private (-> kp
+                      #?(:clj  :private
+                         :cljs (gobj/get "private")))]
+      ;; TODO: What else can assert about account-id's?
+      (is (= 35
+             (count (crypto/account-id-from-private private)))))))
 
 (deftest ripemd-160-test
   (testing "RIPEMD-160 Hash"

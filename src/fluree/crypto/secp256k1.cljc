@@ -87,7 +87,7 @@ public key, hex encoded."
               :or   {output-format :base58}}]
   #?(:clj  (let [pub-prefixed (-> pub-key
                                   (encodings/x962-decode secp256k1)
-                                  .getEncoded
+                                  (.getEncoded true)
                                   (alphabase/byte-array-to-base :bytes)
                                   sha2/sha2-256
                                   ripemd/ripemd-160

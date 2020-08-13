@@ -176,7 +176,7 @@
                 y     (-> point .getYCoord .toBigInteger)]
             (-> curve
                 .getCurve
-                (.createPoint x y true)
+                (.createPoint x y)
                 .normalize))))
 
 
@@ -187,7 +187,7 @@
         x    (subs encoded-key 2 (+ 2 size))
         y    (subs encoded-key (+ 2 size))]
 
-    #?(:clj  (-> curve .getCurve (.createPoint x y true) .normalize)
+    #?(:clj  (-> curve .getCurve (.createPoint x y) .normalize)
        :cljs #js {:x (.initWith (sjcl.bn.) x)
                   :y (.initWith (sjcl.bn.) y)})))
 
