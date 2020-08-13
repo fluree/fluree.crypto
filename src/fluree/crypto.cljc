@@ -142,16 +142,13 @@
       #?(:clj  :public
          :cljs (gobj/get "public"))))
 
-(defn ^:export account-id-from-private
-  [private-key]
-  (-> private-key
-      pub-key-from-private
-      secp256k1/get-sin-from-public-key))
-
 (defn ^:export account-id-from-public
   [public-key]
   (-> public-key
       secp256k1/get-sin-from-public-key))
+
+(def ^:export account-id-from-private
+  (comp account-id-from-public pub-key-from-private))
 
 (defn ^:export sign-message
   "Sign some message with provided private key.\n  Message must be a byte-array or string.\n  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs)."
