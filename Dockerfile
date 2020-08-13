@@ -1,4 +1,4 @@
-FROM clojure:tools-deps-1.10.1.590-slim-buster
+FROM clojure:tools-deps-1.10.1.561-slim-buster
 
 RUN mkdir -p /usr/src/fluree-crypto
 WORKDIR /usr/src/fluree-crypto
