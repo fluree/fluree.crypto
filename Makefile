@@ -1,4 +1,4 @@
-.PHONY: cljtest cljstest test jar clean
+.PHONY: cljtest cljstest test jar install deploy clean
 
 target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs src/**/* resources/**/*
 	clojure -A:jar
