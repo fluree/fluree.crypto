@@ -1,9 +1,45 @@
-{:deps    {org.clojure/clojure       {:mvn/version "1.10.1"}
-           org.clojure/clojurescript {:mvn/version "1.10.520"}}
- ;; setup some development paths
- :paths   ["src" "target" "resources"]
- ;; setup a helpful alias to start the build
- :aliases {:cljs-dev  {:extra-deps {com.bhauman/figwheel-main       {:mvn/version "0.2.0"}
-                                    com.bhauman/rebel-readline-cljs {:mvn/version "0.1.4"}}
-                       :main-opts  ["-m" "figwheel.main" "-b" "dev" "-r"]}
-           :build-dev {:main-opts ["-m" "figwheel.main" "-b" "dev" "-r"]}}}
+{:deps {org.clojure/clojure {:mvn/version "1.10.1"}
+        org.clojure/clojurescript {:mvn/version "1.10.773"}
+        com.fluree/alphabase {:mvn/version "3.2.1"}
+        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.66"}
+        com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
+
+ :paths ["src" "resources"]
+ :aliases
+ {:cljstest
+  {:extra-paths ["test"]
+   ;; Stop using git checkout of cljs-test-runner once this PR is merged:
+   ;; https://github.com/Olical/cljs-test-runner/issues/36
+   ;; - WSM 2020/7/6
+   :extra-deps {olical/cljs-test-runner
+                {:git/url "https://github.com/Olical/cljs-test-runner.git"
+                 :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
+   :main-opts ["-m" "cljs-test-runner.main"
+               "-D" "doo.edn"
+               "-c" "test-build.edn"
+               "-x" "chrome-headless"]}
+
+  :cljtest
+  {:extra-paths ["test"]
+   :extra-deps {com.cognitect/test-runner
+                {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                 :sha "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
+   :main-opts ["-m" "cognitect.test-runner"]}
+
+  :js-deps
+  {:extra-deps {com.timetraveltoaster/target-bundle-libs {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "target-bundle-libs.core"]}
+
+  :jar
+  {:extra-deps {seancorfield/depstar {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "hf.depstar.jar" "target/fluree-crypto.jar"]}
+
+  :install
+  {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "deps-deploy.deps-deploy" "install"
+               "target/fluree-crypto.jar"]}
+
+  :deploy
+  {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
+   :main-opts ["-m" "deps-deploy.deps-deploy" "deploy"
+               "target/fluree-crypto.jar"]}}}

@@ -1,10 +1,10 @@
-FROM clojure:lein-2.9.3
+FROM clojure:tools-deps-1.10.1.561-slim-buster
 
-RUN mkdir -p /usr/src/fluree.crypto
-WORKDIR /usr/src/fluree.crypto
+RUN mkdir -p /usr/src/fluree-crypto
+WORKDIR /usr/src/fluree-crypto
 
 # Install the tools we need to install the tools we need
-RUN apt-get update && apt-get install -y wget software-properties-common gnupg2
+RUN apt-get update && apt-get install -y wget curl gnupg2 software-properties-common
 
 # Add Chrome source for running CLJS tests
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
@@ -16,17 +16,14 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
 RUN apt-get update && apt-get install -y nodejs google-chrome-stable
 
 # Install & cache project deps
-COPY project.clj ./
-RUN lein deps
-COPY package.json package-lock.json ./
+COPY deps.edn ./
+RUN clojure -A:cljtest:cljstest -Stree
+COPY package.json ./
 RUN npm i
+RUN npm i -g karma-cli
 
-# Compile uberjar
+# Copy in the rest of the code
 COPY . ./
-RUN lein uberjar && mv target/crypto-*-standalone.jar target/fluree.crypto-standalone.jar
-
-# Build CLJS to test the build and cache the additional deps
-RUN lein cljsbuild once min
 
 # create a user for running chrome headless tests
 RUN groupadd fluree && useradd --no-log-init -g fluree -m fluree
@@ -34,10 +31,9 @@ RUN groupadd fluree && useradd --no-log-init -g fluree -m fluree
 # move clj deps to fluree's home
 # double caching in image layers is unfortunate, but setting this user
 # earlier in the build caused its own set of issues
-RUN mv /root/.m2 /home/fluree/.m2
+RUN mv /root/.m2 /home/fluree/.m2 && chown -R fluree.fluree /home/fluree/.m2
 
 RUN chown -R fluree.fluree .
 USER fluree
 
 ENTRYPOINT []
-CMD ["java", "-jar", "target/fluree.crypto-standalone.jar"]

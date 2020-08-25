@@ -11,11 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: docker build -t fluree/crypto .
       - name: Run CLJ tests
-        run: script/run-in-docker.sh lein test
+        run: script/run-in-docker.sh make cljtest
       - name: Run CLJS tests
-        run: script/run-in-docker.sh npm run ci-cljs
+        run: script/run-in-docker.sh make cljstest
       - name: Notify Slack fail
         if: failure()
         env:

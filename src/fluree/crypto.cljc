@@ -6,14 +6,18 @@
     [fluree.crypto.scrypt :as scrypt]
     [fluree.crypto.ripemd :as ripemd]
     [fluree.crypto.secp256k1 :as secp256k1]
-    #?@(:cljs [[goog.crypt :as gcrypt]])
+    #?@(:cljs [[goog.crypt :as gcrypt]
+               [goog.object :as gobj]])
     [alphabase.core :as alphabase])
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
+#?(:cljs (set! *warn-on-infer* true))
+
 (defn ^:export normalize-string
   "Normalizes string for consistent hashing."
-  [s]
+  [#?(:cljs ^js/String s
+      :clj  s)]
   #?(:clj  (Normalizer/normalize s Normalizer$Form/NFKC)
      :cljs (.normalize s "NFKC")))
 
@@ -24,7 +28,6 @@
   (if (string? x)
     :string
     :bytes))
-
 
 (defn ^:export string->byte-array
   "Normalizes string then converts to a byte-array.
@@ -38,7 +41,6 @@
   [s]
   (-> s (alphabase/bytes->string)))
 
-
 (defn ^:export sha2-256
   ([x] (sha2-256 x :hex))
   ([x output-format] (sha2-256 x output-format (coerce-input-format x)))
@@ -47,7 +49,6 @@
        (alphabase/base-to-byte-array input-format)
        sha2/sha2-256
        (alphabase/byte-array-to-base (keyword output-format)))))
-
 
 (defn ^:export sha2-256-normalize
   "sha2-256 hash of provided string after normalizing string."
@@ -73,7 +74,6 @@
    (-> s
        normalize-string
        (sha2-512 output-format :string))))
-
 
 (defn ^:export sha3-256
   ([x] (sha3-256 x :hex))
@@ -101,7 +101,6 @@
        sha3/sha3-512
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-
 (defn ^:export sha3-512-normalize
   "sha3-512 hash of provided string after normalizing string."
   ([s] (sha3-512-normalize s :hex))
@@ -109,7 +108,6 @@
    (-> s
        normalize-string
        (sha3-512 output-format :string))))
-
 
 (defn ^:export ripemd-160
   ([x] (ripemd-160 x :hex))
@@ -136,26 +134,21 @@
   ([private]
    (secp256k1/generate-key-pair private)))
 
-
 (defn ^:export pub-key-from-private
   "Take a private key as either a hex string or BigInteger (clj) bignumber (cljs), returns as a hex string."
   [private-key]
   (-> (secp256k1/public-key-from-private private-key)
       secp256k1/format-key-pair
       #?(:clj  :public
-         :cljs (aget "public"))))
-
-(defn ^:export account-id-from-private
-  [private-key]
-  (-> private-key
-      pub-key-from-private
-      secp256k1/get-sin-from-public-key))
+         :cljs (gobj/get "public"))))
 
 (defn ^:export account-id-from-public
   [public-key]
   (-> public-key
       secp256k1/get-sin-from-public-key))
 
+(def ^:export account-id-from-private
+  (comp account-id-from-public pub-key-from-private))
 
 (defn ^:export sign-message
   "Sign some message with provided private key.\n  Message must be a byte-array or string.\n  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs)."
@@ -193,7 +186,6 @@
   (let [byte-msg      (string->byte-array message)
         byte-encryped (alphabase/base-to-byte-array encrypted :hex)]
     (apply scrypt/check byte-msg byte-encryped args)))
-
 
 (defn ^:export random-bytes
   "Generates n random bytes."

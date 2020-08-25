@@ -1,7 +1,7 @@
 (ns fluree.crypto.sha3
   (:refer-clojure :exclude [hash])
   (:require [alphabase.core :as alphabase]
-            #?@(:cljs [[jssha3 :as jssha3]]))
+            #?@(:cljs [[js-sha3]]))
   #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest SHA256Digest SHA3Digest GeneralDigest))))
 
 
@@ -15,7 +15,7 @@
              (let [hash-ba (byte-array (.getDigestSize digest))]
                (.doFinal digest hash-ba 0)
                hash-ba))
-     :cljs (jssha3/sha3 hash-size ba)))
+     :cljs (js-sha3.sha3 hash-size ba)))
 
 
 (defn ^:export sha3-256
