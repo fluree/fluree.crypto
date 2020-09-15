@@ -340,3 +340,52 @@ crypto.scrypt_encrypt("hi", salt, 32768, 8, 1)
 
 crypto.scrypt_check("hi", "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4", salt, 32768, 8, 1)
 ```
+
+## Contributing
+
+Clone this repo to your local machine and create a new branch for your work.
+
+You'll need the Clojure CLI tools installed for development and testing of this library.
+
+- macOS
+    - `brew install clojure/tools/clojure`
+ 
+You will also need the NodeJS and NPM tools installed.
+
+- macOS
+    - `brew install node`
+    - `brew install npm`
+
+### Tests
+
+For CLJS tests to work, you'll need to do the following things:
+
+- `npm install -g karma-cli`
+- Install Google Chrome if you don't already have it.
+
+You can run the CLJ and CLJS test suites like this: `make test`.
+
+If you want to run one or the other you can do `make cljtest` or `make cljstest`.
+
+### Building
+
+Run `make` to build the library. It will create or update `target/fluree-crypto.jar`.
+
+### Installing
+
+You can install the JAR locally with:
+
+`make install`
+
+### Deploying
+
+You can deploy to Clojars with the following:
+
+`env CLOJARS_USERNAME=your-user CLOJARS_PASSWORD=your-deploy-token make deploy`
+
+### CI/CD
+
+The CI/CD pipeline is run inside a Docker container. You can run this locally if you have
+Docker installed via:
+
+`script/run-in-docker.sh make test`
