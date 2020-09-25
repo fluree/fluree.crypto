@@ -1,6 +1,9 @@
 .PHONY: cljtest cljstest test jar install deploy clean
 
-target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs src/**/* resources/**/*
+SOURCES := $(shell find src)
+RESOURCES := $(shell find resources)
+
+target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs node_modules $(SOURCES) $(RESOURCES)
 	clojure -A:jar
 
 jar: target/fluree-crypto.jar
@@ -8,10 +11,15 @@ jar: target/fluree-crypto.jar
 pom.xml: deps.edn
 	clojure -Spom
 
+package-lock.json: package.json
+	npm install
+
+node_modules: package.json package-lock.json
+
 cljtest:
 	clojure -A:cljtest
 
-cljstest:
+cljstest: node_modules
 	clojure -A:cljstest
 
 test: cljtest cljstest
