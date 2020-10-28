@@ -1,4 +1,4 @@
-FROM clojure:tools-deps-1.10.1.561-slim-buster
+FROM clojure:tools-deps-1.10.1.727-slim-buster
 
 RUN mkdir -p /usr/src/fluree-crypto
 WORKDIR /usr/src/fluree-crypto
@@ -11,15 +11,16 @@ RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key
 RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
 
 # Add node PPA to get newer versions
-RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 
 RUN apt-get update && apt-get install -y nodejs google-chrome-stable
 
 # Install & cache project deps
 COPY deps.edn ./
-RUN clojure -A:cljtest:cljstest -Stree
+RUN clojure -A:cljtest:cljstest -P
+
 COPY package.json ./
-RUN npm i
+RUN npm install
 RUN npm i -g karma-cli
 
 # Copy in the rest of the code

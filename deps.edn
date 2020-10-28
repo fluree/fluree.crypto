@@ -11,9 +11,9 @@
    ;; Stop using git checkout of cljs-test-runner once this PR is merged:
    ;; https://github.com/Olical/cljs-test-runner/issues/36
    ;; - WSM 2020/7/6
-   :extra-deps {olical/cljs-test-runner
-                {:git/url "https://github.com/Olical/cljs-test-runner.git"
-                 :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
+   :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0-SNAPSHOT"}}
+                ;{:git/url "https://github.com/Olical/cljs-test-runner.git"
+                ; :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
    :main-opts ["-m" "cljs-test-runner.main"
                "-D" "doo.edn"
                "-c" "test-build.edn"
