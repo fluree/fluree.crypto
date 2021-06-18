@@ -8,3 +8,6 @@
 .hg/
 target/*
 /package-lock.json
+/.clj-kondo/.cache
+/.eastwood
+/scanning_results
