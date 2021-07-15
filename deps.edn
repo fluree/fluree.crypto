@@ -1,7 +1,7 @@
-{:deps {org.clojure/clojure {:mvn/version "1.10.1"}
-        org.clojure/clojurescript {:mvn/version "1.10.773"}
+{:deps {org.clojure/clojure {:mvn/version "1.10.3"}
+        org.clojure/clojurescript {:mvn/version "1.10.866"}
         com.fluree/alphabase {:mvn/version "3.2.1"}
-        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.67"}
+        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.69"}
         com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
 
  :paths ["src" "resources"]
@@ -11,7 +11,7 @@
    ;; Stop using git checkout of cljs-test-runner once this PR is merged:
    ;; https://github.com/Olical/cljs-test-runner/issues/36
    ;; - WSM 2020/7/6
-   :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0-SNAPSHOT"}}
+   :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
                 ;{:git/url "https://github.com/Olical/cljs-test-runner.git"
                 ; :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
    :main-opts ["-m" "cljs-test-runner.main"
@@ -23,7 +23,7 @@
   {:extra-paths ["test"]
    :extra-deps {com.cognitect/test-runner
                 {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                 :sha "f7ef16dc3b8332b0d77bc0274578ad5270fbfedd"}}
+                 :sha "f597341b6ca7bb4cf027e0a34a6710ca9cb969da"}}
    :main-opts ["-m" "cognitect.test-runner"]}
 
   :js-deps
@@ -31,7 +31,7 @@
    :main-opts ["-m" "target-bundle-libs.core"]}
 
   :jar
-  {:extra-deps {seancorfield/depstar {:mvn/version "RELEASE"}}
+  {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
    :main-opts ["-m" "hf.depstar.jar" "target/fluree-crypto.jar"]}
 
   :install
@@ -58,5 +58,5 @@
    :main-opts ["-m" "antq.core"]}
 
   :clj-kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.06.01"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.06.18"}}
    :main-opts ["-m" "clj-kondo.main" "--lint" "src" "--config" ".clj-kondo/config.edn"]}}}
