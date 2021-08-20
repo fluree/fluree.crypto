@@ -3,13 +3,10 @@
 SOURCES := $(shell find src)
 RESOURCES := $(shell find resources)
 
-target/fluree-crypto.jar: deps.edn pom.xml src/deps.cljs node_modules $(SOURCES) $(RESOURCES)
-	clojure -M:jar
+target/fluree-crypto.jar: deps.edn src/deps.cljs node_modules $(SOURCES) $(RESOURCES)
+	clojure -X:jar
 
 jar: target/fluree-crypto.jar
-
-pom.xml: deps.edn
-	clojure -Spom
 
 package-lock.json: package.json
 	npm install

@@ -6,7 +6,11 @@
 
  :paths ["src" "resources"]
  :aliases
- {:cljstest
+ {:mvn/group-id com.fluree
+  :mvn/artifact-id crypto
+  :mvn/version "0.3.5"
+
+  :cljstest
   {:extra-paths ["test"]
    :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
    :main-opts ["-m" "cljs-test-runner.main"
@@ -26,8 +30,13 @@
    :main-opts ["-m" "target-bundle-libs.core"]}
 
   :jar
-  {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
-   :main-opts ["-m" "hf.depstar.jar" "target/fluree-crypto.jar"]}
+  {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.278"}}
+   :exec-fn    hf.depstar/jar
+   :exec-args  {:jar         "target/fluree-crypto.jar"
+                :group-id    :mvn/group-id
+                :artifact-id :mvn/artifact-id
+                :version     :mvn/version
+                :sync-pom    true}}
 
   :install
   {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}

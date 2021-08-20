@@ -11,3 +11,4 @@ target/*
 /.clj-kondo/.cache
 /.eastwood
 /scanning_results
+pom.xml
