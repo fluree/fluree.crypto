@@ -12,7 +12,8 @@
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
-#?(:cljs (set! *warn-on-infer* true))
+#?(:clj  (set! *warn-on-reflection* true)
+   :cljs (set! *warn-on-infer* true))
 
 (defn ^:export normalize-string
   "Normalizes string for consistent hashing."

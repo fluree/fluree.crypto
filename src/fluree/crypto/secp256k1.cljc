@@ -13,15 +13,17 @@
               (java.security SecureRandom)
               (clojure.lang Reflector)
               (org.bouncycastle.crypto.generators ECKeyPairGenerator)
-              (org.bouncycastle.crypto.params ECKeyGenerationParameters ECDomainParameters)
+              (org.bouncycastle.crypto.params ECKeyGenerationParameters ECDomainParameters ECPrivateKeyParameters)
               (org.bouncycastle.asn1.sec SECNamedCurves)
               (org.bouncycastle.crypto.signers HMacDSAKCalculator)
               (org.bouncycastle.crypto.digests SHA256Digest)
               (org.bouncycastle.asn1 DERSequenceGenerator)
               (org.bouncycastle.asn1 ASN1Integer)
-              (org.bouncycastle.math.ec ECAlgorithms))))
+              (org.bouncycastle.math.ec ECAlgorithms ECPoint))))
 
-(defonce ^:private secp256k1
+#?(:clj (set! *warn-on-reflection* true))
+
+(defonce ^:private ^ECDomainParameters secp256k1
          #?(:cljs (.. sjcl -ecc -curves -k256)
             :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
                     (ECDomainParameters. (.getCurve params)
@@ -45,7 +47,7 @@
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
 public key, hex encoded."
-  [public]
+  [^ECPoint public]
   (let [x #?(:clj (-> public .getAffineXCoord .toBigInteger (.toString 16))
              :cljs (-> public .-x .toString (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj (-> public .getAffineYCoord .toBigInteger (.toString 16))
@@ -57,7 +59,7 @@ public key, hex encoded."
   public key and private key as a map, with each value hex encoded."
   [pair]
   (let [private #?(:clj (:private pair) :cljs (gobj/get pair "private"))
-        public #?(:clj  (:public pair) :cljs (gobj/get pair "public"))
+        ^ECPoint public #?(:clj  (:public pair) :cljs (gobj/get pair "public"))
         x #?(:clj       (-> public .getAffineXCoord .toBigInteger (.toString 16))
              :cljs (-> public (gobj/get "x") .toString (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
@@ -72,7 +74,7 @@ public key, hex encoded."
   [private]
   (let [private-bn #?(:clj (cond
                              (instance? java.math.BigInteger private) private
-                             (string? private) (BigInteger. private 16))
+                             (string? private) (BigInteger. ^String private 16))
                       :cljs (-> (sjcl.bn. private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
@@ -123,9 +125,13 @@ public key, hex encoded."
 (defn ^:export new-private-key
   "Generates a new random private key."
   []
-  #?(:clj  (-> (ECKeyPairGenerator.)
-               (doto (.init (ECKeyGenerationParameters. secp256k1 (SecureRandom.))))
-               .generateKeyPair .getPrivate .getD)
+  #?(:clj  (let [gen (doto (ECKeyPairGenerator.)
+                       (.init (ECKeyGenerationParameters.
+                                secp256k1
+                                (SecureRandom.))))
+                 keypair (.generateKeyPair gen)
+                 ^ECPrivateKeyParameters private (.getPrivate keypair)]
+             (.getD private))
      :cljs (-> (sjcl.ecc.ecdsa.generateKeys secp256k1)
                (gobj/get "sec")
                (.get)
@@ -152,11 +158,12 @@ public key, hex encoded."
 (defn deterministic-generate-k
   "Deterministically generate a random number in accordance with RFC 6979.
   Provided hash should have 256 bits to align with secp256k1 curve."
-  [hash-ba priv-key curve]
+  ^HMacDSAKCalculator
+  [hash-ba priv-key ^ECDomainParameters curve]
   #?(:clj  (do (assert (= (count hash-ba)
                           (-> curve .getN .bitLength (/ 8)))
                        "Hash should have the same number of bytes as the curve")
-               (doto (HMacDSAKCalculator. (Reflector/invokeConstructor SHA256Digest (into-array [])))
+               (doto (HMacDSAKCalculator. (SHA256Digest.))
                  (.init (.getN curve) priv-key hash-ba)))
      :cljs (let [l            (-> curve .-r .bitLength)
                  curve-bytes  (/ l 8)
@@ -178,7 +185,7 @@ public key, hex encoded."
 (defn- compute-recovery-byte
   "Compute a recovery byte for a compressed ECDSA signature given R and S parameters.
   Returns value as byte integer."
-  [kp r s]
+  [^ECPoint kp r s]
   #?(:clj  (let [n      (.getN secp256k1)
                  big-r? (>= r n)
                  big-s? (>= (+ s s) n)
@@ -197,7 +204,7 @@ public key, hex encoded."
 
 
 (defn ^:export sign-hash
-  [hash-ba private-bn recovery-byte?]
+  [^bytes hash-ba private-bn recovery-byte?]
   (let [rng           (deterministic-generate-k hash-ba private-bn secp256k1)
         n #?(:clj     (.getN secp256k1)
              :cljs (.-r secp256k1))
@@ -207,7 +214,7 @@ public key, hex encoded."
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
                                (let [k  (.nextK rng)
-                                     kp (-> secp256k1 .getG (.multiply k) .normalize)
+                                     ^ECPoint kp (-> secp256k1 .getG (.multiply k) .normalize)
                                      r  (-> kp .getXCoord .toBigInteger (.mod n))
                                      s_ (-> k
                                             (.modInverse n)
@@ -253,7 +260,7 @@ public key, hex encoded."
   signature according to the algorithm in SEC1v2 section 4.1.6
 
   recovery-byte should be an integer byte."
-  [hash recovery-byte r s]
+  [^bytes hash recovery-byte ^BigInteger r ^BigInteger s]
   (assert (and (number? recovery-byte)
                (<= 0x1B recovery-byte)
                (<= recovery-byte 0x1E))

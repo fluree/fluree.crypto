@@ -8,6 +8,8 @@
                    (javax.crypto KeyGenerator Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
 
+#?(:clj (set! *warn-on-reflection* true))
+
 (defn encrypt* [iv key-ba ba]
   #?(:clj  (let [iv     (IvParameterSpec. (byte-array (mapv #(if (> % 127) (- % 256) %) iv)))
                  spec   (SecretKeySpec. (byte-array 32 key-ba) "AES")

@@ -3,6 +3,8 @@
             #?@(:cljs [["@fluree/sjcl" :as sjcl]]))
  #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest))))
 
+#?(:clj (set! *warn-on-reflection* true))
+
 (defn ripemd-160
   "Creates a ripemd-160 hash from byte input."
   [ba]

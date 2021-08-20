@@ -4,9 +4,10 @@
                      [goog.crypt.Sha512]))
   #?(:clj (:import (java.security MessageDigest))))
 
+#?(:clj (set! *warn-on-reflection* true))
 
 (defn- hash
-  [ba hash-size]
+  [ba ^long hash-size]
   (assert (#{256 512} hash-size))
   (let [digest (case hash-size
                  256 #?(:clj  (MessageDigest/getInstance "SHA-256")
@@ -29,4 +30,3 @@
   "Create a sha2 hash from byte-array."
   [ba]
   (hash ba 512))
-
