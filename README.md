@@ -362,6 +362,7 @@ For CLJS tests to work, you'll need to do the following things:
 
 - `npm install -g karma-cli`
 - Install Google Chrome if you don't already have it.
+- You might also want to run `npx webpack` to make sure that has everything it needs to run.
 
 You can run the CLJ and CLJS test suites like this: `make test`.
 
