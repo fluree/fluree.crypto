@@ -2,6 +2,7 @@
   (:require [fluree.crypto.sha3 :as sha3]
             [alphabase.core :as alphabase]))
 
+#?(:clj (set! *warn-on-reflection* true))
 
 (defn hash-string-key
   "Takes a sha3-512 hash of provided string key and returns n bytes.

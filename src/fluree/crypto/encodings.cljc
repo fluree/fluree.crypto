@@ -4,9 +4,15 @@
                        ["@fluree/sjcl" :as sjcl]])
             [alphabase.core :as alphabase])
   #?(:clj
-     (:import (org.bouncycastle.asn1 ASN1Integer DERSequenceGenerator ASN1InputStream)
+     (:import (org.bouncycastle.asn1 ASN1Integer
+                                     ASN1InputStream
+                                     ASN1Sequence
+                                     DERSequenceGenerator)
+              (org.bouncycastle.crypto.params ECDomainParameters)
+              (org.bouncycastle.math.ec ECPoint)
               (java.io ByteArrayOutputStream))))
 
+#?(:clj (set! *warn-on-reflection* true))
 
 (defn ^:export pad-hex
   "Pads a hex value with a leading zero if odd."
@@ -18,25 +24,25 @@
 (defn biginteger->hex
   "Hex-encode java.math.BigInteger (clj) or sjcl.bn (cljs)."
   [bn]
-  #?(:clj  (-> bn (.toString 16) pad-hex)
+  #?(:clj  (-> ^BigInteger bn (.toString 16) pad-hex)
      :cljs (-> bn .toString (.replace #"^0x" "") pad-hex)))
 
 (defn biginteger->bytes
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
   ([bn] (biginteger->bytes bn nil))
   ([bn l]
-   #?(:clj  (-> bn .toByteArray)
+   #?(:clj  (-> ^BigInteger bn .toByteArray)
       :cljs (-> bn (.toBits l) sjcl.codec.bytes.fromBits))))
 
 (defn bytes->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  [ba]
+  [^bytes ba]
   #?(:clj  (BigInteger. ba)
      :cljs (-> ba sjcl.codec.bytes.toBits (sjcl.bn.))))
 
 (defn hex->biginteger
   "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
-  [hex]
+  [^String hex]
   #?(:clj  (BigInteger. hex 16)
      :cljs (.initWith (sjcl.bn.) hex)))
 
@@ -129,7 +135,7 @@
 
 (defn compute-point
   "Compute an elliptic curve point for a y-coordinate parity and x-coordinate"
-  [y-even? x-coordinate curve]
+  [y-even? x-coordinate ^ECDomainParameters curve]
   #?(:clj
      (let [l     (-> curve .getN .bitLength (/ 8))
            raw   (->> x-coordinate
@@ -166,7 +172,7 @@
 ;; X92.61 encode / decode
 
 (defn- x962-hex-compressed-decode
-  [encoded-key curve]
+  [encoded-key ^ECDomainParameters curve]
   #?(:cljs
           (let [x       (-> (subs encoded-key 2) hex->biginteger)
                 y-even? (= (subs encoded-key 0 2) "02")]
@@ -182,7 +188,7 @@
 
 (defn- x962-hex-uncompressed-decode
   "Decode a hex encoded public key into x and y coordinates as bytes."
-  [encoded-key curve]
+  [encoded-key ^ECDomainParameters curve]
   (let [size (- (count encoded-key) 2)           ;; first hex byte is 0x04, rest is x and y coords
         x    (subs encoded-key 2 (+ 2 size))
         y    (subs encoded-key (+ 2 size))]
@@ -194,6 +200,7 @@
 
 (defn x962-decode
   "Decode a X9.62 encoded public key from hex"
+  ^ECPoint
   [public-key curve]
   (assert (#{"02" "03" "04"} (subs public-key 0 2)) "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04.")
   (cond
@@ -214,7 +221,7 @@
   "Encodes x and y coords in hex to X9.62 with optional compression (default true).
   x coords and y coords should be supplied in hex format."
   ([x-coord y-coord] (x962-encode x-coord y-coord true))
-  ([x-coord y-coord compressed?]
+  ([^String x-coord ^String y-coord compressed?]
    (if-not compressed?
      (str "04" (pad-hex x-coord) (pad-hex y-coord))
      (let [y-even? #?(:clj (let [y-bi (BigInteger. y-coord 16)]
@@ -230,14 +237,15 @@
 ;; DER encode / decode
 
 (defn- DER-decode-standard
-  "Decodes an ordinary encoded list of numbers from a hexadecimal following the distinguished encoding rules. Returns R and S as bigintegers (clj). "
+  "Decodes an ordinary encoded list of numbers from a hexadecimal following the distinguished encoding rules.
+  Returns R and S as bigintegers (clj). "
   [asn1]
   (assert (= "30" (subs asn1 0 2)), "Input must start with the code 30")
-  #?(:clj  (let [signature (alphabase/base-to-byte-array asn1 :hex)]
+  #?(:clj  (let [^bytes signature (alphabase/base-to-byte-array asn1 :hex)]
              (with-open [decoder (ASN1InputStream. signature)]
-               (let [sequence (.readObject decoder)]
-                 [(-> sequence (.getObjectAt 0) .getValue)
-                  (-> sequence (.getObjectAt 1) .getValue)])))
+               (let [^ASN1Sequence sequence (.readObject decoder)]
+                 [(-> sequence ^ASN1Integer (.getObjectAt 0) .getValue)
+                  (-> sequence ^ASN1Integer (.getObjectAt 1) .getValue)])))
      :cljs (let [{:keys [length remaining]} (asn1/decode-asn1-length (subs asn1 2))]
              (when-not (= (* length 2) (count remaining))
                (throw (ex-info "Decoded header length does not match actual length of message"
@@ -287,7 +295,7 @@
   "Create a DER encoded signature.
   Both R and S should be bigintegers (clj) /bignumbers (cljs).
   recover should also be biginteger"
-  [R S recover curve]
+  [^BigInteger R ^BigInteger S recover curve]
   #?(:cljs (let [recover 27
                  l           (-> curve .-r .bitLength)
                  R-hex (-> R (.toBits l) sjcl.codec.hex.fromBits)

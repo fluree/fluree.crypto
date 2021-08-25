@@ -6,9 +6,11 @@
               (org.bouncycastle.crypto.params KeyParameter)
               (org.bouncycastle.crypto.digests SHA256Digest))))
 
+#?(:clj (set! *warn-on-reflection* true))
+
 (defn hmac-sha256
   "Returns HMAC using SHA-256 hashing. Both key and message should be bytes."
-  [message key]
+  [^bytes message ^bytes key]
   #?(:clj  (let [hmac   (HMac. (SHA256Digest.))
                  k      (KeyParameter. key)
                  result (byte-array (.getMacSize hmac))]

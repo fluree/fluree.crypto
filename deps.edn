@@ -6,14 +6,13 @@
 
  :paths ["src" "resources"]
  :aliases
- {:cljstest
+ {:mvn/group-id com.fluree
+  :mvn/artifact-id crypto
+  :mvn/version "0.3.5"
+
+  :cljstest
   {:extra-paths ["test"]
-   ;; Stop using git checkout of cljs-test-runner once this PR is merged:
-   ;; https://github.com/Olical/cljs-test-runner/issues/36
-   ;; - WSM 2020/7/6
    :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
-                ;{:git/url "https://github.com/Olical/cljs-test-runner.git"
-                ; :sha "7daff9a9a62cb8824bfccfb6ef7a429ecbac3e5c"}}
    :main-opts ["-m" "cljs-test-runner.main"
                "-D" "doo.edn"
                "-c" "test-build.edn"
@@ -23,7 +22,7 @@
   {:extra-paths ["test"]
    :extra-deps {com.cognitect/test-runner
                 {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                 :sha "f597341b6ca7bb4cf027e0a34a6710ca9cb969da"}}
+                 :sha "4e7e1c0dfd5291fa2134df052443dc29695d8cbe"}}
    :main-opts ["-m" "cognitect.test-runner"]}
 
   :js-deps
@@ -31,8 +30,13 @@
    :main-opts ["-m" "target-bundle-libs.core"]}
 
   :jar
-  {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.267"}}
-   :main-opts ["-m" "hf.depstar.jar" "target/fluree-crypto.jar"]}
+  {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.278"}}
+   :exec-fn    hf.depstar/jar
+   :exec-args  {:jar         "target/fluree-crypto.jar"
+                :group-id    :mvn/group-id
+                :artifact-id :mvn/artifact-id
+                :version     :mvn/version
+                :sync-pom    true}}
 
   :install
   {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}

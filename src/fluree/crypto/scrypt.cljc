@@ -8,6 +8,8 @@
               (com.lambdaworks.crypto SCrypt)
               (java.security SecureRandom))))
 
+#?(:clj (set! *warn-on-reflection* true))
+
 (defn random-bytes
   "Returns a random byte array of the specified size.
   NOTE: This will only work in the browser, not for node.js"

@@ -4,10 +4,11 @@
             #?@(:cljs [[js-sha3]]))
   #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest SHA256Digest SHA3Digest GeneralDigest))))
 
+#?(:clj (set! *warn-on-reflection* true))
 
 ;; could support other hash sizes besides 256 and 512 with existing code
 (defn ^:export hash
-  [ba hash-size]
+  [ba ^long hash-size]
   (assert (#{256 512} hash-size))
   #?(:clj  (let [digest (doto (SHA3Digest. hash-size)
                           (.reset)
