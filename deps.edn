@@ -1,5 +1,5 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        org.clojure/clojurescript {:mvn/version "1.10.866"}
+        org.clojure/clojurescript {:mvn/version "1.10.879"}
         com.fluree/alphabase {:mvn/version "3.2.1"}
         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.69"}
         com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
