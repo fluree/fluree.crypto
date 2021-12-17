@@ -8,6 +8,7 @@
     "ws": "^7.3.1"
   },
   "dependencies": {
+    "@cljs-oss/module-deps": "^1.1.1",
     "@fluree/sjcl": "^1.0.8-3",
     "js-sha3": "^0.8.0"
   }

@@ -16,8 +16,15 @@ node_modules: package.json package-lock.json
 cljtest:
 	clojure -M:cljtest
 
-cljstest: node_modules
-	clojure -M:cljstest
+cljs-browser-test: node_modules
+	rm -rf out/* # prevent circular dependency cljs.core -> cljs.core
+	clojure -M:cljs-browser-test
+
+cljs-node-test: node_modules
+	rm -rf out/* # prevent circular dependency cljs.core -> cljs.core
+	clojure -M:cljs-node-test
+
+cljstest: cljs-browser-test cljs-node-test
 
 test: cljtest cljstest
 
