@@ -10,13 +10,19 @@
   :mvn/artifact-id crypto
   :mvn/version "0.3.7"
 
-  :cljstest
+  :cljs-browser-test
   {:extra-paths ["test"]
    :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
    :main-opts ["-m" "cljs-test-runner.main"
                "-D" "doo.edn"
-               "-c" "test-build.edn"
+               "-c" "build-browser-test.edn"
                "-x" "chrome-headless"]}
+
+  :cljs-node-test
+  {:extra-paths ["test"]
+   :extra-deps  {olical/cljs-test-runner {:mvn/version "3.8.0"}}
+   :main-opts   ["-m" "cljs-test-runner.main"
+                 "-c" "build-nodejs-test.edn"]}
 
   :cljtest
   {:extra-paths ["test"]
