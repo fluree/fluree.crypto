@@ -8,7 +8,7 @@
  :aliases
  {:mvn/group-id com.fluree
   :mvn/artifact-id crypto
-  :mvn/version "0.3.6"
+  :mvn/version "0.3.7"
 
   :cljstest
   {:extra-paths ["test"]
