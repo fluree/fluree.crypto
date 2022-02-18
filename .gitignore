@@ -12,3 +12,4 @@ target/*
 /.eastwood
 /scanning_results
 pom.xml
+/.nrepl-port
