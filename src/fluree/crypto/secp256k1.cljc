@@ -6,7 +6,8 @@
             [fluree.crypto.encodings :as encodings]
             #?@(:cljs [["@fluree/sjcl" :as sjcl]
                        [goog.object :as gobj]])
-            [fluree.crypto.ripemd :as ripemd])
+            [fluree.crypto.ripemd :as ripemd]
+            [clojure.string :as str])
 
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
@@ -54,27 +55,40 @@ public key, hex encoded."
              :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))]
     (encodings/x962-encode x y)))
 
+(defn- pad-to-length
+  "Left-pads str to length len with zeroes."
+  [str len]
+  (let [pad-len (- len (count str))]
+    (if (pos? pad-len)
+      (str/join (concat (repeat pad-len \0) str))
+      str)))
+
 (defn format-key-pair
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair) :cljs (gobj/get pair "private"))
-        ^ECPoint public #?(:clj  (:public pair) :cljs (gobj/get pair "public"))
-        x #?(:clj       (-> public .getAffineXCoord .toBigInteger (.toString 16))
-             :cljs (-> public (gobj/get "x") .toString (.replace #"^0x" "") encodings/pad-hex))
-        y #?(:clj       (-> public .getAffineYCoord .toBigInteger (.toString 16))
-             :cljs (-> public (gobj/get "y") .toString (.replace #"^0x" "") encodings/pad-hex))
+  (let [private #?(:clj (:private pair)
+                   :cljs (gobj/get pair "private"))
+        ^ECPoint public #?(:clj (:public pair)
+                           :cljs (gobj/get pair "public"))
+        x #?(:clj  (-> public .getAffineXCoord .toBigInteger
+                       (.toString 16) (pad-to-length 64))
+             :cljs (-> public (gobj/get "x") .toString
+                       (.replace #"^0x" "") encodings/pad-hex))
+        y #?(:clj  (-> public .getAffineYCoord .toBigInteger
+                       (.toString 16))
+             :cljs (-> public (gobj/get "y") .toString
+                       (.replace #"^0x" "") encodings/pad-hex))
         pair-hex        {:private (encodings/biginteger->hex private)
                          :public  (encodings/x962-encode x y)}]
-
     #?(:clj  pair-hex
        :cljs (clj->js pair-hex))))
 
 (defn public-key-from-private
   [private]
-  (let [private-bn #?(:clj (cond
-                             (instance? java.math.BigInteger private) private
-                             (string? private) (BigInteger. ^String private 16))
+  (let [private-bn #?(:clj  (cond
+                              (instance? BigInteger private) private
+                              (string? private) (BigInteger. ^String private 16))
                       :cljs (-> (sjcl.bn. private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
@@ -125,11 +139,11 @@ public key, hex encoded."
 (defn ^:export new-private-key
   "Generates a new random private key."
   []
-  #?(:clj  (let [gen (doto (ECKeyPairGenerator.)
-                       (.init (ECKeyGenerationParameters.
-                                secp256k1
-                                (SecureRandom.))))
-                 keypair (.generateKeyPair gen)
+  #?(:clj  (let [gen                             (doto (ECKeyPairGenerator.)
+                                                   (.init (ECKeyGenerationParameters.
+                                                            secp256k1
+                                                            (SecureRandom.))))
+                 keypair                         (.generateKeyPair gen)
                  ^ECPrivateKeyParameters private (.getPrivate keypair)]
              (.getD private))
      :cljs (-> (sjcl.ecc.ecdsa.generateKeys secp256k1)
@@ -213,16 +227,16 @@ public key, hex encoded."
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
-                               (let [k  (.nextK rng)
+                               (let [k           (.nextK rng)
                                      ^ECPoint kp (-> secp256k1 .getG (.multiply k) .normalize)
-                                     r  (-> kp .getXCoord .toBigInteger (.mod n))
-                                     s_ (-> k
-                                            (.modInverse n)
-                                            (.multiply (-> r
-                                                           (.multiply private-bn)
-                                                           (.add z)))
-                                            (.mod n))
-                                     s  (if (< (+ s_ s_) n) s_ (.subtract n s_))]
+                                     r           (-> kp .getXCoord .toBigInteger (.mod n))
+                                     s_          (-> k
+                                                     (.modInverse n)
+                                                     (.multiply (-> r
+                                                                    (.multiply private-bn)
+                                                                    (.add z)))
+                                                     (.mod n))
+                                     s           (if (< (+ s_ s_) n) s_ (.subtract n s_))]
                                  (if (or (zero? r) (zero? s))
                                    (recur)
                                    [r s s_ kp])))
@@ -285,12 +299,12 @@ public key, hex encoded."
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
 
-            (let [g-point  (sjcl.ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
-                  r-point  (sjcl.ecc.point. secp256k1 (.-x R) (.-y R))
-                  sumOTM   (.mult2 r-point s e-inv g-point)
-                  sumPoint (sjcl.ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
-              (-> (.mult sumPoint r-inv)
-                  format-public-key)))))
+       (let [g-point  (sjcl.ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+             r-point  (sjcl.ecc.point. secp256k1 (.-x R) (.-y R))
+             sumOTM   (.mult2 r-point s e-inv g-point)
+             sumPoint (sjcl.ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
+         (-> (.mult sumPoint r-inv)
+             format-public-key)))))
 
 
 (defn recover-public-key-from-hash
