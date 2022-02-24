@@ -56,12 +56,12 @@ public key, hex encoded."
     (encodings/x962-encode x y)))
 
 (defn- pad-to-length
-  "Left-pads str to length len with zeroes."
-  [str len]
-  (let [pad-len (- len (count str))]
+  "Left-pads string s to length len with zeroes."
+  [s len]
+  (let [pad-len (- len (count s))]
     (if (pos? pad-len)
-      (str/join (concat (repeat pad-len \0) str))
-      str)))
+      (str/join (concat (repeat pad-len \0) s))
+      s)))
 
 (defn format-key-pair
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
