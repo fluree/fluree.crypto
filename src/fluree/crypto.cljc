@@ -145,8 +145,7 @@
 
 (defn ^:export account-id-from-public
   [public-key]
-  (-> public-key
-      secp256k1/get-sin-from-public-key))
+  (secp256k1/get-sin-from-public-key public-key))
 
 (def ^:export account-id-from-private
   (comp account-id-from-public pub-key-from-private))

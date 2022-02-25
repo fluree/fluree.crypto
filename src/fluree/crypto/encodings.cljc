@@ -177,7 +177,9 @@
           (let [x       (-> (subs encoded-key 2) hex->biginteger)
                 y-even? (= (subs encoded-key 0 2) "02")]
             (compute-point y-even? x curve))
-     :clj (let [point (.decodePoint (.getCurve curve) (alphabase/base-to-byte-array encoded-key :hex))
+     :clj (let [point (.decodePoint (.getCurve curve)
+                                    (alphabase/base-to-byte-array
+                                      encoded-key :hex))
                 x     (-> point .getXCoord .toBigInteger)
                 y     (-> point .getYCoord .toBigInteger)]
             (-> curve
@@ -202,7 +204,11 @@
   "Decode a X9.62 encoded public key from hex"
   ^ECPoint
   [public-key curve]
-  (assert (#{"02" "03" "04"} (subs public-key 0 2)) "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04.")
+  (when-not (#{"02" "03" "04"} (subs public-key 0 2))
+    (throw
+      (ex-info
+        "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04."
+        {:public-key public-key})))
   (cond
     (#{"02" "03"} (subs public-key 0 2))
     (x962-hex-compressed-decode public-key curve)
@@ -213,8 +219,6 @@
     :else
     (throw (ex-info "Invalid encoding on public key"
                     {:encoded-key public-key}))))
-
-
 
 
 (defn x962-encode
