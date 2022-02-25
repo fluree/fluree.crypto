@@ -1,22 +1,22 @@
-{:deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        org.clojure/clojurescript {:mvn/version "1.10.891"}
-        com.fluree/alphabase {:mvn/version "3.2.2"}
-        org.bouncycastle/bcprov-jdk15on {:mvn/version "1.70"}
-        com.lambdaworks/scrypt {:mvn/version "1.4.0"}}
+{:deps  {org.clojure/clojure             {:mvn/version "1.10.3"}
+         org.clojure/clojurescript       {:mvn/version "1.11.4"}
+         com.fluree/alphabase            {:mvn/version "3.2.2"}
+         org.bouncycastle/bcprov-jdk15on {:mvn/version "1.70"}
+         com.lambdaworks/scrypt          {:mvn/version "1.4.0"}}
 
  :paths ["src" "resources"]
  :aliases
- {:mvn/group-id com.fluree
+ {:mvn/group-id    com.fluree
   :mvn/artifact-id crypto
-  :mvn/version "0.3.7"
+  :mvn/version     "0.3.7"
 
   :cljs-browser-test
   {:extra-paths ["test"]
-   :extra-deps {olical/cljs-test-runner {:mvn/version "3.8.0"}}
-   :main-opts ["-m" "cljs-test-runner.main"
-               "-D" "doo.edn"
-               "-c" "build-browser-test.edn"
-               "-x" "chrome-headless"]}
+   :extra-deps  {olical/cljs-test-runner {:mvn/version "3.8.0"}}
+   :main-opts   ["-m" "cljs-test-runner.main"
+                 "-D" "doo.edn"
+                 "-c" "build-browser-test.edn"
+                 "-x" "chrome-headless"]}
 
   :cljs-node-test
   {:extra-paths ["test"]
@@ -26,14 +26,14 @@
 
   :cljtest
   {:extra-paths ["test"]
-   :extra-deps {com.cognitect/test-runner
-                {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                 :sha "cc75980b43011773162b485f46f939dc5fba91e4"}}
-   :main-opts ["-m" "cognitect.test-runner"]}
+   :extra-deps  {com.cognitect/test-runner
+                 {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                  :sha     "cc75980b43011773162b485f46f939dc5fba91e4"}}
+   :main-opts   ["-m" "cognitect.test-runner"]}
 
   :js-deps
   {:extra-deps {com.timetraveltoaster/target-bundle-libs {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "target-bundle-libs.core"]}
+   :main-opts  ["-m" "target-bundle-libs.core"]}
 
   :jar
   {:extra-deps {com.github.seancorfield/depstar {:mvn/version "2.1.303"}}
@@ -46,13 +46,13 @@
 
   :install
   {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "deps-deploy.deps-deploy" "install"
-               "target/fluree-crypto.jar"]}
+   :main-opts  ["-m" "deps-deploy.deps-deploy" "install"
+                "target/fluree-crypto.jar"]}
 
   :deploy
   {:extra-deps {deps-deploy/deps-deploy {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "deps-deploy.deps-deploy" "deploy"
-               "target/fluree-crypto.jar"]}
+   :main-opts  ["-m" "deps-deploy.deps-deploy" "deploy"
+                "target/fluree-crypto.jar"]}
 
   :coverage
   {:extra-paths ["test"]
@@ -61,12 +61,12 @@
 
   :eastwood
   {:extra-deps {jonase/eastwood {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "eastwood.lint" {:source-paths ["src"] :out "scanning_results/eastwood.out"}]}
+   :main-opts  ["-m" "eastwood.lint" {:source-paths ["src"] :out "scanning_results/eastwood.out"}]}
 
   :ancient
   {:extra-deps {com.github.liquidz/antq {:mvn/version "RELEASE"}}
-   :main-opts ["-m" "antq.core"]}
+   :main-opts  ["-m" "antq.core"]}
 
   :clj-kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2021.12.16"}}
-   :main-opts ["-m" "clj-kondo.main" "--lint" "src" "--config" ".clj-kondo/config.edn"]}}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.02.09"}}
+   :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "--config" ".clj-kondo/config.edn"]}}}
