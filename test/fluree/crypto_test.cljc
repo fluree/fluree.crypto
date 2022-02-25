@@ -1,15 +1,15 @@
 (ns fluree.crypto-test
   (:require
-    [clojure.string :as str]
     #?@(:clj  [[clojure.test :refer :all]]
         :cljs [[cljs.test :refer-macros [deftest is testing]]
                [goog.object :as gobj]])
-    [fluree.crypto :as crypto]))
+    [fluree.crypto :as crypto])
+  #?(:clj (:import (java.util Random))))
 
 ;http://blog.raphinou.com/2009/03/generate-random-string-in-clojure.html
 
 ;Clojure-specific code for randomness
-#?(:clj (def random (java.util.Random.)))
+#?(:clj (def random (Random.)))
 
 ;define characters list to use to generate string (#clj)
 #?(:clj (def char-range
