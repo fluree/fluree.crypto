@@ -204,9 +204,11 @@
   "Decode a X9.62 encoded public key from hex"
   ^ECPoint
   [public-key curve]
-  (assert (#{"02" "03" "04"}
-           (subs public-key 0 2))
-          "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04.")
+  (when-not (#{"02" "03" "04"} (subs public-key 0 2))
+    (throw
+      (ex-info
+        "X9.62 encoded public key must have a first byte of 0x02, 0x03 or 0x04."
+        {:public-key public-key})))
   (cond
     (#{"02" "03"} (subs public-key 0 2))
     (x962-hex-compressed-decode public-key curve)
