@@ -133,6 +133,16 @@
                          {:argument n,
                           :modulus  modulus}))))))
 
+
+(defn pad-to-length
+  "Left-pads string s to length len with zeroes."
+  [s len]
+  (let [pad-len (- len (count s))]
+    (if (pos? pad-len)
+      (str/join (concat (repeat pad-len \0) s))
+      s)))
+
+
 (defn compute-point
   "Compute an elliptic curve point for a y-coordinate parity and x-coordinate"
   [y-even? x-coordinate ^ECDomainParameters curve]
@@ -152,7 +162,8 @@
                                             out))]
        (-> (cons (if y-even? 0x02 0x03) input)
            byte-array
-           alphabase/bytes->hex))
+           alphabase/bytes->hex
+           (pad-to-length 64)))
 
      :cljs   (let [modulus     (-> curve .-field .-modulus)
 

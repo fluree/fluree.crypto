@@ -55,14 +55,6 @@ public key, hex encoded."
              :cljs (-> public .-y .toString (.replace #"^0x" "") encodings/pad-hex))]
     (encodings/x962-encode x y)))
 
-(defn- pad-to-length
-  "Left-pads string s to length len with zeroes."
-  [s len]
-  (let [pad-len (- len (count s))]
-    (if (pos? pad-len)
-      (str/join (concat (repeat pad-len \0) s))
-      s)))
-
 (defn format-key-pair
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
@@ -72,7 +64,7 @@ public key, hex encoded."
         ^ECPoint public #?(:clj (:public pair)
                            :cljs (gobj/get pair "public"))
         x #?(:clj  (-> public .getAffineXCoord .toBigInteger
-                       (.toString 16) (pad-to-length 64))
+                       (.toString 16) (encodings/pad-to-length 64))
              :cljs (-> public (gobj/get "x") .toString
                        (.replace #"^0x" "") encodings/pad-hex))
         y #?(:clj  (-> public .getAffineYCoord .toBigInteger
