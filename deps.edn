@@ -1,6 +1,7 @@
 {:deps  {org.clojure/clojure             {:mvn/version "1.10.3"}
          org.clojure/clojurescript       {:mvn/version "1.11.4"}
-         com.fluree/alphabase            {:mvn/version "3.2.2"}
+         com.fluree/alphabase            {:git/url "https://github.com/fluree/alphabase.git"
+                                          :sha "6aa66bb52336eb6a75c4de8c70ef81054b7011c5"}
          org.bouncycastle/bcprov-jdk15on {:mvn/version "1.70"}
          com.lambdaworks/scrypt          {:mvn/version "1.4.0"}}
 
