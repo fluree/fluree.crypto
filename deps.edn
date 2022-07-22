@@ -1,5 +1,5 @@
-{:deps  {org.clojure/clojure             {:mvn/version "1.10.3"}
-         org.clojure/clojurescript       {:mvn/version "1.11.4"}
+{:deps  {org.clojure/clojure             {:mvn/version "1.11.1"}
+         org.clojure/clojurescript       {:mvn/version "1.11.60"}
          com.fluree/alphabase            {:mvn/version "3.3.0"}
          org.bouncycastle/bcprov-jdk15on {:mvn/version "1.70"}
          com.lambdaworks/scrypt          {:mvn/version "1.4.0"}}
@@ -28,7 +28,7 @@
   {:extra-paths ["test"]
    :extra-deps  {com.cognitect/test-runner
                  {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                  :sha     "cc75980b43011773162b485f46f939dc5fba91e4"}}
+                  :sha     "a85b3b02765fb68684ab9ee4a8598eacf7e471d2"}}
    :main-opts   ["-m" "cognitect.test-runner"]}
 
   :js-deps
@@ -56,7 +56,7 @@
 
   :coverage
   {:extra-paths ["test"]
-   :extra-deps  {cloverage/cloverage {:mvn/version "1.2.2"}}
+   :extra-deps  {cloverage/cloverage {:mvn/version "1.2.4"}}
    :main-opts   ["-m" "cloverage.coverage" "-p" "src" "-s" "test" "--output" "scanning_results/coverage"]}
 
   :eastwood
@@ -68,5 +68,5 @@
    :main-opts  ["-m" "antq.core"]}
 
   :clj-kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.02.09"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.06.22"}}
    :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "--config" ".clj-kondo/config.edn"]}}}
