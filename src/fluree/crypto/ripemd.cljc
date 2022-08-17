@@ -9,9 +9,9 @@
   "Creates a ripemd-160 hash from byte input."
   [ba]
   #?(:cljs (-> ba
-               sjcl.codec.bytes.toBits
-               sjcl.hash.ripemd160.hash
-               sjcl.codec.bytes.fromBits)
+               sjcl/codec.bytes.toBits
+               sjcl/hash.ripemd160.hash
+               sjcl/codec.bytes.fromBits)
      :clj  (let [d (RIPEMD160Digest.)
                  _ (.update d ba 0 (count ba))
                  o (byte-array (.getDigestSize d))]
@@ -27,5 +27,3 @@
 
   (= "ad6ce46f7f1ea8519dc02ce8ce0c278c6ff329b2"
      (alphabase/bytes->hex (ripemd-160 (.getBytes "hi there!")))))
-
-

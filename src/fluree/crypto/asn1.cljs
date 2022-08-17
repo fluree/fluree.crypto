@@ -24,14 +24,14 @@
   "Formats a hexadecimal encoding an unsigned integer, dropping left zeros and
   padding with a left zero if necessary to avoid being confused for a two's complement"
   [n]
-  (let [bytes  (drop-while zero? (-> n sjcl.codec.hex.toBits sjcl.codec.bytes.fromBits))
+  (let [bytes  (drop-while zero? (-> n sjcl/codec.hex.toBits sjcl/codec.bytes.fromBits))
         bytes* (clj->js
                  (if-not (zero? (bit-and (first bytes) 0x80))
                    (cons 0 bytes)
                    bytes))]
     (-> bytes*
-        sjcl.codec.bytes.toBits
-        sjcl.codec.hex.fromBits)))
+        sjcl/codec.bytes.toBits
+        sjcl/codec.hex.fromBits)))
 
 
 (defn format-asn1-unsigned-integer
@@ -90,4 +90,3 @@
        (count))
 
   (bit-and 5 0x80))
-

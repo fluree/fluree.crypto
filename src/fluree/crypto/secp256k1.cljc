@@ -81,7 +81,7 @@ public key, hex encoded."
   (let [private-bn #?(:clj  (cond
                               (instance? BigInteger private) private
                               (string? private) (BigInteger. ^String private 16))
-                      :cljs (-> (sjcl.bn. private)))]
+                      :cljs (-> (sjcl/bn. private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     #?(:clj  {:private private-bn
@@ -138,10 +138,10 @@ public key, hex encoded."
                  keypair                         (.generateKeyPair gen)
                  ^ECPrivateKeyParameters private (.getPrivate keypair)]
              (.getD private))
-     :cljs (-> (sjcl.ecc.ecdsa.generateKeys secp256k1)
+     :cljs (-> (sjcl/ecc.ecdsa.generateKeys secp256k1)
                (gobj/get "sec")
                (.get)
-               (sjcl.bn.))))
+               (sjcl/bn.))))
 
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
@@ -215,7 +215,7 @@ public key, hex encoded."
         n #?(:clj     (.getN secp256k1)
              :cljs (.-r secp256k1))
         z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (-> hash-ba sjcl.codec.bytes.toBits (sjcl.bn.)))
+             :cljs (-> hash-ba sjcl/codec.bytes.toBits (sjcl/bn.)))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
@@ -291,10 +291,10 @@ public key, hex encoded."
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
 
-       (let [g-point  (sjcl.ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
-             r-point  (sjcl.ecc.point. secp256k1 (.-x R) (.-y R))
+       (let [g-point  (sjcl/ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+             r-point  (sjcl/ecc.point. secp256k1 (.-x R) (.-y R))
              sumOTM   (.mult2 r-point s e-inv g-point)
-             sumPoint (sjcl.ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
+             sumPoint (sjcl/ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
          (-> (.mult sumPoint r-inv)
              format-public-key)))))
 
@@ -349,7 +349,3 @@ public key, hex encoded."
 (comment
 
   (verify "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5" "hi" "1c3045022100e81841ed32ed8c36e31dfa671cb21c1d9bdd6b581ea699b62d4201445e3fe2ea02200473ef2d72258029dae899ece3846c5e06190ce27ca3f289bf8a5cf43ef02c68"))
-
-
-
-

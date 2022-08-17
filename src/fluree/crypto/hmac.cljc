@@ -18,8 +18,8 @@
              (.update hmac message 0 (alength message))
              (.doFinal hmac result 0)
              result)
-     :cljs (let [hmac         (sjcl.misc.hmac. (sjcl.codec.bytes.toBits key))
-                 message-bits (sjcl.codec.bytes.toBits message)]
+     :cljs (let [hmac         (sjcl/misc.hmac. (sjcl/codec.bytes.toBits key))
+                 message-bits (sjcl/codec.bytes.toBits message)]
              (-> hmac
                  (.encrypt message-bits)
-                 (sjcl.codec.bytes.fromBits)))))
+                 (sjcl/codec.bytes.fromBits)))))
