@@ -308,7 +308,6 @@ public key, hex encoded."
     recovered))
 
 
-
 (defn recover-public-key
   "Recover a public key from original message and signature (hex) of the
   message's sha2-256 hash."
