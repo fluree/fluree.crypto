@@ -3,26 +3,9 @@
     #?@(:clj  [[clojure.test :refer :all]]
         :cljs [[cljs.test :refer-macros [deftest is testing]]
                [goog.object :as gobj]])
-    [fluree.crypto :as crypto])
-  #?(:clj (:import (java.util Random))))
+    [fluree.crypto.test-utils :refer [random-string]]
+    [fluree.crypto :as crypto]))
 
-;http://blog.raphinou.com/2009/03/generate-random-string-in-clojure.html
-
-;Clojure-specific code for randomness
-#?(:clj (def random (Random.)))
-
-;define characters list to use to generate string (#clj)
-#?(:clj (def char-range
-          (map char (concat (range 48 58) (range 66 92) (range 97 123)))))
-
-;generates 1 random character
-(defn random-char []
-  #?(:clj  (nth char-range (.nextInt random (count char-range)))
-     :cljs (.toString (rand-int 16rF) 16)))
-
-; generates random string of length characters
-(defn random-string [length]
-  (apply str (take length (repeatedly random-char))))
 
 (def composed-decomposed-map
   {(str "\u00C5") (str "\u0041\u030a")
