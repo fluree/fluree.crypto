@@ -245,8 +245,8 @@
                                 (.initWith y-coord)
                                 (bn-even?)))]
        (if y-even?
-         (str "02" (pad-hex x-coord))
-         (str "03" (pad-hex x-coord)))))))
+         (str "02" (pad-to-length (pad-hex x-coord) 64))
+         (str "03" (pad-to-length (pad-hex x-coord) 64)))))))
 
 
 ;; DER encode / decode
