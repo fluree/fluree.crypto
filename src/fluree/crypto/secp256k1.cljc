@@ -147,8 +147,8 @@ public key, hex encoded."
 
 (defn ^:export generate-key-pair
   "Returns key pair in hex format using X9.62 compressed encoding for public key."
-  ([] (-> (generate-key-pair*) format-key-pair))
-  ([private] (-> (generate-key-pair* private) format-key-pair)))
+  ([] (format-key-pair (generate-key-pair*)))
+  ([private] (format-key-pair (generate-key-pair* private))))
 
 
 ;; adapted from https://github.com/Sepia-Officinalis/secp256k1
@@ -206,7 +206,7 @@ public key, hex encoded."
         n #?(:clj     (.getN secp256k1)
              :cljs (.-r secp256k1))
         z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (-> hash-ba sjcl/codec.bytes.toBits (sjcl/bn.)))
+             :cljs (-> hash-ba sjcl/codec.bytes.toBits sjcl/bn.))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
@@ -232,8 +232,11 @@ public key, hex encoded."
                                    s     (if ge? (.sub n s_) s_)]
                                [r s s_ kp]))
         recovery-byte (when recovery-byte? (compute-recovery-byte kp r s_))]
-    (-> (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)
-        alphabase/bytes->hex)))
+    (let [der-sig (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)]
+      ; TODO: The DER fn converts hex to bytes and then we convert bytes back to hex here.
+      ;       Can we optimize that a bit?
+      (alphabase/bytes->hex der-sig))))
+
 
 
 
@@ -281,8 +284,8 @@ public key, hex encoded."
     #?(:clj (-> (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
-
-       (let [g-point  (sjcl/ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+       (let [G        (.-G secp256k1)
+             g-point  (sjcl/ecc.point. secp256k1 (.-x G) (.-y G))
              r-point  (sjcl/ecc.point. secp256k1 (.-x R) (.-y R))
              sumOTM   (.mult2 r-point s e-inv g-point)
              sumPoint (sjcl/ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
@@ -294,9 +297,8 @@ public key, hex encoded."
   "Recover a public key from a hash byte-array and signature (hex)."
   [hash signature]
   (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
-        recover   (int recover)
-        recovered (ecrecover hash recover R S)]
-    recovered))
+        recover (int recover)]
+    (ecrecover hash recover R S)))
 
 
 (defn recover-public-key
@@ -307,7 +309,6 @@ public key, hex encoded."
                               (alphabase/string->bytes input)
                               input))]
     (recover-public-key-from-hash hash signature)))
-
 
 
 (defn verify-signature-from-hash

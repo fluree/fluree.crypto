@@ -154,41 +154,40 @@
                       .toByteArray)
            input (cond (= l (count raw)) raw
                        (< l (count raw)) (drop-while zero? raw)
-                       (> l (count raw))  (let [out (byte-array l)]
-                                            (System/arraycopy
-                                              raw 0
-                                              out (- l (count raw))
-                                              (count raw))
+                       (> l (count raw)) (let [out (byte-array l)]
+                                           (System/arraycopy
+                                             raw 0
+                                             out (- l (count raw))
+                                             (count raw))
 
-                                            out))]
+                                           out))]
        (-> (cons (if y-even? 0x02 0x03) input)
            byte-array
            alphabase/bytes->hex
            (pad-to-length 64)))
 
-     :cljs   (let [modulus     (-> curve .-field .-modulus)
-
-                   ; √(x * (a + x**2) + b) % p
-                   y-candidate (modular-square-root
-                                 (.add
-                                   (.mul x-coordinate (.add (.-a curve) (.square x-coordinate)))
-                                   (.-b curve))
-                                 modulus)
-                   y           (if (= y-even? (bn-even? y-candidate))
-                                 y-candidate
-                                 (.sub modulus y-candidate))]
-
-               #js {:x (.initWith (sjcl/bn.) x-coordinate)
-                    :y (.initWith (sjcl/bn.) y)})))
+     :cljs
+     (let [modulus     (-> curve .-field .-modulus)
+           ; √(x * (a + x**2) + b) % p
+           y-candidate (modular-square-root
+                         (.add
+                           (.mul x-coordinate (.add (.-a curve) (.square x-coordinate)))
+                           (.-b curve))
+                         modulus)
+           y           (if (= y-even? (bn-even? y-candidate))
+                         y-candidate
+                         (.sub modulus y-candidate))]
+       #js {:x (sjcl/bn. x-coordinate)
+            :y (sjcl/bn. y)})))
 
 ;; X92.61 encode / decode
 
 (defn- x962-hex-compressed-decode
   [encoded-key ^ECDomainParameters curve]
   #?(:cljs
-          (let [x       (-> (subs encoded-key 2) hex->biginteger)
-                y-even? (= (subs encoded-key 0 2) "02")]
-            (compute-point y-even? x curve))
+     (let [x       (-> (subs encoded-key 2) hex->biginteger)
+           y-even? (= (subs encoded-key 0 2) "02")]
+       (compute-point y-even? x curve))
      :clj (let [point (.decodePoint (.getCurve curve)
                                     (alphabase/base-to-byte-array
                                       encoded-key :hex))
@@ -203,7 +202,7 @@
 (defn- x962-hex-uncompressed-decode
   "Decode a hex encoded public key into x and y coordinates as bytes."
   [encoded-key ^ECDomainParameters curve]
-  (let [size (- (count encoded-key) 2)           ;; first hex byte is 0x04, rest is x and y coords
+  (let [size (- (count encoded-key) 2) ;; first hex byte is 0x04, rest is x and y coords
         x    (subs encoded-key 2 (+ 2 size))
         y    (subs encoded-key (+ 2 size))]
 
@@ -282,7 +281,7 @@
   (let [asn1       (str/lower-case asn1)
         first-byte (subs asn1 0 2)]
     (cond
-      (#{"1b" "1c" "1d" "1e"} first-byte)                   ;; recovery bytes
+      (#{"1b" "1c" "1d" "1e"} first-byte) ;; recovery bytes
       (-> (conj (DER-decode-standard (subs asn1 2))
                 (-> (alphabase/hex->bytes first-byte)
                     byte->int)))
@@ -312,10 +311,9 @@
   Both R and S should be bigintegers (clj) /bignumbers (cljs).
   recover should also be biginteger"
   [^BigInteger R ^BigInteger S recover curve]
-  #?(:cljs (let [recover 27
-                 l           (-> curve .-r .bitLength)
-                 R-hex (-> R (.toBits l) sjcl/codec.hex.fromBits)
-                 S-hex  (-> S (.toBits l) sjcl/codec.hex.fromBits)
+  #?(:cljs (let [l           (-> curve .-r .bitLength)
+                 R-hex       (-> R (.toBits l) sjcl/codec.hex.fromBits)
+                 S-hex       (-> S (.toBits l) sjcl/codec.hex.fromBits)
                  recover-hex (.toString recover 16)
                  R-asn1      (asn1/encode-asn1-unsigned-integer-hex R-hex)
                  S-asn1      (asn1/encode-asn1-unsigned-integer-hex S-hex)]
