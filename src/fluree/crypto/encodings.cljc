@@ -1,7 +1,8 @@
 (ns fluree.crypto.encodings
   (:require [clojure.string :as str]
             #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-                       ["@fluree/sjcl" :as sjcl]])
+                       ["@fluree/sjcl" :as sjcl]
+                       [fluree.crypto.bn :as bn]])
             [alphabase.core :as alphabase])
   #?(:clj
      (:import (org.bouncycastle.asn1 ASN1Integer
@@ -56,8 +57,8 @@
      "Tests is an sjcl.bn (cljs) is even. Returns boolean if so."
      [sjcl-bn]
      (-> sjcl-bn
-         .-limbs                                            ;; .limbs holds array of numbers
-         (get 0)                                            ;; first array number is lowest bits
+         .-limbs ;; .limbs holds array of numbers
+         (get 0) ;; first array number is lowest bits
          (bit-and 1)
          (zero?))))
 
@@ -70,7 +71,7 @@
      [n modulus]
      (let [n    (.mod n modulus)
            mod8 (-> modulus (.mod 8) .toString js/parseInt)]
-       (assert (.greaterEquals modulus 0), "Modulus must be non-negative")
+       (assert (bn/>= modulus 0), "Modulus must be non-negative")
        (cond
          (.equals n 0) n
 

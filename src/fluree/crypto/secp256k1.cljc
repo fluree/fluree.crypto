@@ -5,9 +5,9 @@
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
             #?@(:cljs [["@fluree/sjcl" :as sjcl]
-                       [goog.object :as gobj]])
-            [fluree.crypto.ripemd :as ripemd]
-            [clojure.string :as str])
+                       [goog.object :as gobj]
+                       [fluree.crypto.bn :as bn]])
+            [fluree.crypto.ripemd :as ripemd])
 
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
@@ -42,8 +42,8 @@
   #?(:clj  (and (<= 1 private)
                 (<= private modulus))
      :cljs (and
-             (.greaterEquals private 1)
-             (.greaterEquals modulus private))))
+             (bn/>= private 1)
+             (bn/>= modulus private))))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -201,8 +201,8 @@ public key, hex encoded."
                  (+ (if big-r? 2 0))))
 
      :cljs (let [n      (.-r secp256k1)
-                 big-r? (.greaterEquals r n)
-                 big-s? (.greaterEquals (.add s s) n)
+                 big-r? (bn/>= r n)
+                 big-s? (bn/>= (.add s s) n)
                  y-odd? (-> kp .-y encodings/bn-even? not)]
              (-> 0x1B
                  (+ (if (not= big-s? y-odd?) 1 0))
@@ -232,13 +232,13 @@ public key, hex encoded."
                                  (if (or (zero? r) (zero? s))
                                    (recur)
                                    [r s s_ kp])))
-                       :cljs (let [k  rng
-                                   kp (-> secp256k1 .-G (.mult k))
-                                   r  (-> kp .-x (.mod n))
-                                   s_ (-> (.mul r private-bn) (.add z) (.mul (.inverseMod k n)) (.mod n))
-                                   s  (if (.greaterEquals (.add s_ s_) n)
-                                        (.sub n s_)
-                                        s_)]
+                       :cljs (let [k     rng
+                                   kp    (-> secp256k1 .-G (.mult k))
+                                   r     (-> kp .-x (.mod n))
+                                   s_    (-> (.mul r private-bn) (.add z) (.mul (.inverseMod k n)) (.mod n))
+                                   s_+s_ (.add s_ s_)
+                                   ge?   (bn/>= s_+s_ n)
+                                   s     (if ge? (.sub n s_) s_)]
                                [r s s_ kp]))
         recovery-byte (when recovery-byte? (compute-recovery-byte kp r s_))]
     (-> (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)
