@@ -14,6 +14,7 @@
      :cljs (.toString (rand-int 16rF) 16)))
 
 (defn random-string
-  ([] (random-string (.nextInt random 10000)))
+  ([] (random-string #?(:clj  (.nextInt random 10000)
+                        :cljs (rand-int 10000))))
   ([length]
    (apply str (take length (repeatedly random-char)))))
