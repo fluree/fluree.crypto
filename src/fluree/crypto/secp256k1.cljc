@@ -81,10 +81,9 @@ public key, hex encoded."
                       :cljs (sjcl/bn. private))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
-    #?(:clj  {:private private-bn
-              :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
-       :cljs {:private private-bn
-              :public  (.mult (.-G secp256k1) private-bn)})))
+    {:private private-bn
+     :public  #?(:clj  (-> secp256k1 .getG (.multiply private-bn) .normalize)
+                 :cljs (.mult (.-G secp256k1) private-bn))}))
 
 (defn- pub-key->bytes
   [pub-key]
