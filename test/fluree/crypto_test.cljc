@@ -71,32 +71,20 @@
 
 (deftest public-private-key-conversions
   (testing "Private key returns the same public keys"
-    (let [kp*     (crypto/generate-key-pair)
-          public  (-> kp*
-                      #?(:clj  :public
-                         :cljs (gobj/get "public")))
-          private (-> kp*
-                      #?(:clj  :private
-                         :cljs (gobj/get "private")))
+    (let [{:keys [public private]} (crypto/generate-key-pair)
           public' (crypto/pub-key-from-private private)]
       (is (= public public')))))
 
 (deftest account-id-from-public-test
   (testing "can derive account-id from public key"
-    (let [kp     (crypto/generate-key-pair)
-          public (-> kp
-                     #?(:clj  :public
-                        :cljs (gobj/get "public")))]
+    (let [{:keys [public]} (crypto/generate-key-pair)]
       ;; TODO: What else can assert about account-ids?
       (is (= 35
              (count (crypto/account-id-from-public public)))))))
 
 (deftest account-id-from-private-test
   (testing "can derive account-id from private key"
-    (let [kp      (crypto/generate-key-pair)
-          private (-> kp
-                      #?(:clj  :private
-                         :cljs (gobj/get "private")))]
+    (let [{:keys [private]} (crypto/generate-key-pair)]
       ;; TODO: What else can assert about account-id's?
       (is (= 35
              (count (crypto/account-id-from-private private)))))))

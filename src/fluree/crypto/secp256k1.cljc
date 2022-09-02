@@ -59,74 +59,65 @@ public key, hex encoded."
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair)
-                   :cljs (gobj/get pair "private"))
-        ^ECPoint public #?(:clj (:public pair)
-                           :cljs (gobj/get pair "public"))
-        x #?(:clj  (-> public .getAffineXCoord .toBigInteger
-                       (.toString 16) (encodings/pad-to-length 64))
+  (let [private         (:private pair)
+        ^ECPoint public (:public pair)
+        x #?(:clj       (-> public .getAffineXCoord .toBigInteger
+                            (.toString 16) (encodings/pad-to-length 64))
              :cljs (-> public (gobj/get "x") .toString
                        (.replace #"^0x" "") encodings/pad-hex))
-        y #?(:clj  (-> public .getAffineYCoord .toBigInteger
-                       (.toString 16))
+        y #?(:clj       (-> public .getAffineYCoord .toBigInteger
+                            (.toString 16))
              :cljs (-> public (gobj/get "y") .toString
-                       (.replace #"^0x" "") encodings/pad-hex))
-        pair-hex        {:private (encodings/biginteger->hex private)
-                         :public  (encodings/x962-encode x y)}]
-    #?(:clj  pair-hex
-       :cljs (clj->js pair-hex))))
+                       (.replace #"^0x" "") encodings/pad-hex))]
+    {:private (encodings/biginteger->hex private)
+     :public  (encodings/x962-encode x y)}))
+
 
 (defn public-key-from-private
   [private]
-  (let [private-bn #?(:clj  (cond
-                              (instance? BigInteger private) private
-                              (string? private) (BigInteger. ^String private 16))
-                      :cljs (-> (sjcl/bn. private)))]
+  (let [private-bn #?(:clj (cond
+                             (instance? BigInteger private) private
+                             (string? private) (BigInteger. ^String private 16))
+                      :cljs (sjcl/bn. private))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     #?(:clj  {:private private-bn
               :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
-       :cljs #js {:private private-bn
-                  :public  (.mult (.-G secp256k1) private-bn)})))
+       :cljs {:private private-bn
+              :public  (.mult (.-G secp256k1) private-bn)})))
+
+(defn- pub-key->bytes
+  [pub-key]
+  #?(:clj  (-> pub-key
+               (encodings/x962-decode secp256k1)
+               (.getEncoded true)
+               (alphabase/byte-array-to-base :bytes))
+     :cljs (alphabase/hex->bytes pub-key)))
+
+(defn- ->byte-array
+  [bytes]
+  #?(:clj  (byte-array bytes)
+     :cljs (clj->js bytes)))
 
 (defn get-sin-from-public-key
   "Generate a SIN from a public key"
   [pub-key & {:keys [output-format]
               :or   {output-format :base58}}]
-  #?(:clj  (let [pub-prefixed (-> pub-key
-                                  (encodings/x962-decode secp256k1)
-                                  (.getEncoded true)
-                                  (alphabase/byte-array-to-base :bytes)
-                                  sha2/sha2-256
-                                  ripemd/ripemd-160
-                                  ;;; What is this 15 and 2? Version?
-                                  (->> (concat [0x0F 0x02]))
-                                  byte-array)
-                 checksum     (-> pub-prefixed
-                                  sha2/sha2-256
-                                  sha2/sha2-256
-                                  (#(take 4 %)))]
-             (alphabase/byte-array-to-base (concat pub-prefixed checksum) output-format))
-     :cljs (let [pub-prefixed (-> pub-key
-                                  alphabase/hex->bytes
-                                  sha2/sha2-256
-                                  ripemd/ripemd-160
-                                  (->> (concat [0x0F 0x02]))
-                                  clj->js)
-                 checksum     (-> pub-prefixed
-                                  sha2/sha2-256
-                                  sha2/sha2-256
-                                  (#(take 4 %))
-                                  clj->js)]
-             (alphabase/bytes->base58 (-> (concat pub-prefixed checksum) clj->js)))))
+  (let [pub-prefixed (-> pub-key
+                         pub-key->bytes
+                         sha2/sha2-256
+                         ripemd/ripemd-160
+                         ;;; What is this 15 and 2? Version?
+                         (->> (concat [0x0F 0x02]))
+                         ->byte-array)
+        checksum     (-> pub-prefixed
+                         sha2/sha2-256
+                         sha2/sha2-256
+                         (->> (take 4)))
+        bytes        (concat pub-prefixed checksum)
+        ba           (->byte-array bytes)]
+    (alphabase/byte-array-to-base ba output-format)))
 
-;(defn sha256-b
-;  "alternative which takes multiple args, returns bytes"
-;  [& data]
-;  (let [d (MessageDigest/getInstance "SHA-256")]
-;    (doseq [datum data]
-;      (.update d (to-bytes datum)))
-;    (.digest d)))
 
 (defn ^:export new-private-key
   "Generates a new random private key."
