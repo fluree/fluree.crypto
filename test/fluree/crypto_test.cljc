@@ -3,26 +3,9 @@
     #?@(:clj  [[clojure.test :refer :all]]
         :cljs [[cljs.test :refer-macros [deftest is testing]]
                [goog.object :as gobj]])
-    [fluree.crypto :as crypto])
-  #?(:clj (:import (java.util Random))))
+    [fluree.crypto.test-utils :refer [random-string]]
+    [fluree.crypto :as crypto]))
 
-;http://blog.raphinou.com/2009/03/generate-random-string-in-clojure.html
-
-;Clojure-specific code for randomness
-#?(:clj (def random (Random.)))
-
-;define characters list to use to generate string (#clj)
-#?(:clj (def char-range
-          (map char (concat (range 48 58) (range 66 92) (range 97 123)))))
-
-;generates 1 random character
-(defn random-char []
-  #?(:clj  (nth char-range (.nextInt random (count char-range)))
-     :cljs (.toString (rand-int 16rF) 16)))
-
-; generates random string of length characters
-(defn random-string [length]
-  (apply str (take length (repeatedly random-char))))
 
 (def composed-decomposed-map
   {(str "\u00C5") (str "\u0041\u030a")
@@ -88,32 +71,20 @@
 
 (deftest public-private-key-conversions
   (testing "Private key returns the same public keys"
-    (let [kp*     (crypto/generate-key-pair)
-          public  (-> kp*
-                      #?(:clj  :public
-                         :cljs (gobj/get "public")))
-          private (-> kp*
-                      #?(:clj  :private
-                         :cljs (gobj/get "private")))
+    (let [{:keys [public private]} (crypto/generate-key-pair)
           public' (crypto/pub-key-from-private private)]
       (is (= public public')))))
 
 (deftest account-id-from-public-test
   (testing "can derive account-id from public key"
-    (let [kp     (crypto/generate-key-pair)
-          public (-> kp
-                     #?(:clj  :public
-                        :cljs (gobj/get "public")))]
+    (let [{:keys [public]} (crypto/generate-key-pair)]
       ;; TODO: What else can assert about account-ids?
       (is (= 35
              (count (crypto/account-id-from-public public)))))))
 
 (deftest account-id-from-private-test
   (testing "can derive account-id from private key"
-    (let [kp      (crypto/generate-key-pair)
-          private (-> kp
-                      #?(:clj  :private
-                         :cljs (gobj/get "private")))]
+    (let [{:keys [private]} (crypto/generate-key-pair)]
       ;; TODO: What else can assert about account-id's?
       (is (= 35
              (count (crypto/account-id-from-private private)))))))

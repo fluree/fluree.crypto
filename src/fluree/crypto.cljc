@@ -135,13 +135,17 @@
   ([private]
    (secp256k1/generate-key-pair private)))
 
+#?(:cljs
+   (defn ^:export generateKeyPair
+     ([] (clj->js (generate-key-pair)))
+     ([private] (clj->js (generate-key-pair private)))))
+
 (defn ^:export pub-key-from-private
   "Take a private key as either a hex string or BigInteger (clj) bignumber (cljs), returns as a hex string."
   [private-key]
   (-> (secp256k1/public-key-from-private private-key)
       secp256k1/format-key-pair
-      #?(:clj  :public
-         :cljs (gobj/get "public"))))
+      :public))
 
 (defn ^:export account-id-from-public
   [public-key]

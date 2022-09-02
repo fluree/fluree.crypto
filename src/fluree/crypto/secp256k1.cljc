@@ -5,9 +5,9 @@
             [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
             #?@(:cljs [["@fluree/sjcl" :as sjcl]
-                       [goog.object :as gobj]])
-            [fluree.crypto.ripemd :as ripemd]
-            [clojure.string :as str])
+                       [goog.object :as gobj]
+                       [fluree.crypto.bn :as bn]])
+            [fluree.crypto.ripemd :as ripemd])
 
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
@@ -42,8 +42,8 @@
   #?(:clj  (and (<= 1 private)
                 (<= private modulus))
      :cljs (and
-             (.greaterEquals private 1)
-             (.greaterEquals modulus private))))
+             (bn/>= private 1)
+             (bn/>= modulus private))))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -59,74 +59,64 @@ public key, hex encoded."
   "Takes internal representation of a key-pair and returns X9.62 compressed encoded
   public key and private key as a map, with each value hex encoded."
   [pair]
-  (let [private #?(:clj (:private pair)
-                   :cljs (gobj/get pair "private"))
-        ^ECPoint public #?(:clj (:public pair)
-                           :cljs (gobj/get pair "public"))
-        x #?(:clj  (-> public .getAffineXCoord .toBigInteger
-                       (.toString 16) (encodings/pad-to-length 64))
+  (let [private         (:private pair)
+        ^ECPoint public (:public pair)
+        x #?(:clj       (-> public .getAffineXCoord .toBigInteger
+                            (.toString 16) (encodings/pad-to-length 64))
              :cljs (-> public (gobj/get "x") .toString
                        (.replace #"^0x" "") encodings/pad-hex))
-        y #?(:clj  (-> public .getAffineYCoord .toBigInteger
-                       (.toString 16))
+        y #?(:clj       (-> public .getAffineYCoord .toBigInteger
+                            (.toString 16))
              :cljs (-> public (gobj/get "y") .toString
-                       (.replace #"^0x" "") encodings/pad-hex))
-        pair-hex        {:private (encodings/biginteger->hex private)
-                         :public  (encodings/x962-encode x y)}]
-    #?(:clj  pair-hex
-       :cljs (clj->js pair-hex))))
+                       (.replace #"^0x" "") encodings/pad-hex))]
+    {:private (encodings/biginteger->hex private)
+     :public  (encodings/x962-encode x y)}))
+
 
 (defn public-key-from-private
   [private]
-  (let [private-bn #?(:clj  (cond
-                              (instance? BigInteger private) private
-                              (string? private) (BigInteger. ^String private 16))
-                      :cljs (-> (sjcl/bn. private)))]
+  (let [private-bn #?(:clj (cond
+                             (instance? BigInteger private) private
+                             (string? private) (BigInteger. ^String private 16))
+                      :cljs (sjcl/bn. private))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
-    #?(:clj  {:private private-bn
-              :public  (-> secp256k1 .getG (.multiply private-bn) .normalize)}
-       :cljs #js {:private private-bn
-                  :public  (.mult (.-G secp256k1) private-bn)})))
+    {:private private-bn
+     :public  #?(:clj  (-> secp256k1 .getG (.multiply private-bn) .normalize)
+                 :cljs (.mult (.-G secp256k1) private-bn))}))
+
+(defn- pub-key->bytes
+  [pub-key]
+  #?(:clj  (-> pub-key
+               (encodings/x962-decode secp256k1)
+               (.getEncoded true)
+               (alphabase/byte-array-to-base :bytes))
+     :cljs (alphabase/hex->bytes pub-key)))
+
+(defn- ->byte-array
+  [bytes]
+  #?(:clj  (byte-array bytes)
+     :cljs (clj->js bytes)))
 
 (defn get-sin-from-public-key
   "Generate a SIN from a public key"
   [pub-key & {:keys [output-format]
               :or   {output-format :base58}}]
-  #?(:clj  (let [pub-prefixed (-> pub-key
-                                  (encodings/x962-decode secp256k1)
-                                  (.getEncoded true)
-                                  (alphabase/byte-array-to-base :bytes)
-                                  sha2/sha2-256
-                                  ripemd/ripemd-160
-                                  ;;; What is this 15 and 2? Version?
-                                  (->> (concat [0x0F 0x02]))
-                                  byte-array)
-                 checksum     (-> pub-prefixed
-                                  sha2/sha2-256
-                                  sha2/sha2-256
-                                  (#(take 4 %)))]
-             (alphabase/byte-array-to-base (concat pub-prefixed checksum) output-format))
-     :cljs (let [pub-prefixed (-> pub-key
-                                  alphabase/hex->bytes
-                                  sha2/sha2-256
-                                  ripemd/ripemd-160
-                                  (->> (concat [0x0F 0x02]))
-                                  clj->js)
-                 checksum     (-> pub-prefixed
-                                  sha2/sha2-256
-                                  sha2/sha2-256
-                                  (#(take 4 %))
-                                  clj->js)]
-             (alphabase/bytes->base58 (-> (concat pub-prefixed checksum) clj->js)))))
+  (let [pub-prefixed (-> pub-key
+                         pub-key->bytes
+                         sha2/sha2-256
+                         ripemd/ripemd-160
+                         ;;; What is this 15 and 2? Version?
+                         (->> (concat [0x0F 0x02]))
+                         ->byte-array)
+        checksum     (-> pub-prefixed
+                         sha2/sha2-256
+                         sha2/sha2-256
+                         (->> (take 4)))
+        bytes        (concat pub-prefixed checksum)
+        ba           (->byte-array bytes)]
+    (alphabase/byte-array-to-base ba output-format)))
 
-;(defn sha256-b
-;  "alternative which takes multiple args, returns bytes"
-;  [& data]
-;  (let [d (MessageDigest/getInstance "SHA-256")]
-;    (doseq [datum data]
-;      (.update d (to-bytes datum)))
-;    (.digest d)))
 
 (defn ^:export new-private-key
   "Generates a new random private key."
@@ -156,8 +146,8 @@ public key, hex encoded."
 
 (defn ^:export generate-key-pair
   "Returns key pair in hex format using X9.62 compressed encoding for public key."
-  ([] (-> (generate-key-pair*) format-key-pair))
-  ([private] (-> (generate-key-pair* private) format-key-pair)))
+  ([] (format-key-pair (generate-key-pair*)))
+  ([private] (format-key-pair (generate-key-pair* private))))
 
 
 ;; adapted from https://github.com/Sepia-Officinalis/secp256k1
@@ -201,8 +191,8 @@ public key, hex encoded."
                  (+ (if big-r? 2 0))))
 
      :cljs (let [n      (.-r secp256k1)
-                 big-r? (.greaterEquals r n)
-                 big-s? (.greaterEquals (.add s s) n)
+                 big-r? (bn/>= r n)
+                 big-s? (bn/>= (.add s s) n)
                  y-odd? (-> kp .-y encodings/bn-even? not)]
              (-> 0x1B
                  (+ (if (not= big-s? y-odd?) 1 0))
@@ -215,7 +205,7 @@ public key, hex encoded."
         n #?(:clj     (.getN secp256k1)
              :cljs (.-r secp256k1))
         z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (-> hash-ba sjcl/codec.bytes.toBits (sjcl/bn.)))
+             :cljs (-> hash-ba sjcl/codec.bytes.toBits sjcl/bn.))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
@@ -232,17 +222,20 @@ public key, hex encoded."
                                  (if (or (zero? r) (zero? s))
                                    (recur)
                                    [r s s_ kp])))
-                       :cljs (let [k  rng
-                                   kp (-> secp256k1 .-G (.mult k))
-                                   r  (-> kp .-x (.mod n))
-                                   s_ (-> (.mul r private-bn) (.add z) (.mul (.inverseMod k n)) (.mod n))
-                                   s  (if (.greaterEquals (.add s_ s_) n)
-                                        (.sub n s_)
-                                        s_)]
+                       :cljs (let [k     rng
+                                   kp    (-> secp256k1 .-G (.mult k))
+                                   r     (-> kp .-x (.mod n))
+                                   s_    (-> (.mul r private-bn) (.add z) (.mul (.inverseMod k n)) (.mod n))
+                                   s_+s_ (.add s_ s_)
+                                   ge?   (bn/>= s_+s_ n)
+                                   s     (if ge? (.sub n s_) s_)]
                                [r s s_ kp]))
         recovery-byte (when recovery-byte? (compute-recovery-byte kp r s_))]
-    (-> (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)
-        alphabase/bytes->hex)))
+    (let [der-sig (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)]
+      ; TODO: The DER fn converts hex to bytes and then we convert bytes back to hex here.
+      ;       Can we optimize that a bit?
+      (alphabase/bytes->hex der-sig))))
+
 
 
 
@@ -290,8 +283,8 @@ public key, hex encoded."
     #?(:clj (-> (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
-
-       (let [g-point  (sjcl/ecc.point. secp256k1 (.-x (.-G secp256k1)) (.-y (.-G secp256k1)))
+       (let [G        (.-G secp256k1)
+             g-point  (sjcl/ecc.point. secp256k1 (.-x G) (.-y G))
              r-point  (sjcl/ecc.point. secp256k1 (.-x R) (.-y R))
              sumOTM   (.mult2 r-point s e-inv g-point)
              sumPoint (sjcl/ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
@@ -303,10 +296,8 @@ public key, hex encoded."
   "Recover a public key from a hash byte-array and signature (hex)."
   [hash signature]
   (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
-        recover   (int recover)
-        recovered (ecrecover hash recover R S)]
-    recovered))
-
+        recover (int recover)]
+    (ecrecover hash recover R S)))
 
 
 (defn recover-public-key
@@ -317,7 +308,6 @@ public key, hex encoded."
                               (alphabase/string->bytes input)
                               input))]
     (recover-public-key-from-hash hash signature)))
-
 
 
 (defn verify-signature-from-hash

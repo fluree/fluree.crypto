@@ -15,7 +15,57 @@ sjcl.bn = class {
 
   /** @param {sjcl.bn} that */
   /** @return {boolean} */
+  equals(that) {}
+
+  getLimb(i) {}
+
+  /** @param {sjcl.bn} that */
+  /** @return {boolean} */
   greaterEquals(that) {}
+
+  toString() {}
+
+  addM(that) {}
+
+  doubleM() {}
+
+  halveM() {}
+
+  subM(that) {}
+
+  mod(that) {}
+
+  inverseMod(p) {}
+
+  add(that) {}
+
+  sub(that) {}
+
+  mul(that) {}
+
+  square() {}
+
+  power(l) {}
+
+  mulmod(that, N) {}
+
+  powermod(x, N) {}
+
+  montpowermod(x, N) {}
+
+  trim() {}
+
+  reduce() {}
+
+  fullReduce() {}
+
+  normalize() {}
+
+  cnormalize() {}
+
+  toBits(len) {}
+
+  bitLength() {}
 }
 
 /* sjcl.ecc */
@@ -33,6 +83,8 @@ sjcl.ecc.curve = class {
     this.G
   }
 }
+
+sjcl.curve.field.modulus = {};
 
 sjcl.ecc.curves = {};
 sjcl.ecc.curves.k256 = sjcl.ecc.curve;
