@@ -349,7 +349,7 @@ You'll need the Clojure CLI tools installed for development and testing of this 
 
 - macOS
     - `brew install clojure/tools/clojure`
- 
+
 You will also need the NodeJS and NPM tools installed.
 
 - macOS
@@ -358,15 +358,9 @@ You will also need the NodeJS and NPM tools installed.
 
 ### Tests
 
-For CLJS tests to work, you'll need to do the following things:
-
-- `npm install -g karma-cli`
-- Install Google Chrome if you don't already have it.
-- You might also want to run `npx webpack` to make sure that has everything it needs to run.
-
 You can run the CLJ and CLJS test suites like this: `make test`.
 
-If you want to run one or the other you can do `make cljtest` or `make cljstest`.
+If you want to run one or the other you can do `make test-clj` or `make test-cljs`.
 
 ### Building
 

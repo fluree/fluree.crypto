@@ -13,20 +13,19 @@ package-lock.json: package.json
 
 node_modules: package.json package-lock.json
 
-cljtest:
-	clojure -M:cljtest
+test-clj:
+	clojure -M:test-clj
 
-cljs-browser-test: node_modules
-	rm -rf out/* # prevent circular dependency cljs.core -> cljs.core
-	clojure -M:cljs-browser-test
+test-nodejs:
+	npx shadow-cljs release node-test
 
-cljs-node-test: node_modules
-	rm -rf out/* # prevent circular dependency cljs.core -> cljs.core
-	clojure -M:cljs-node-test
+test-browser:
+	npx shadow-cljs release browser-test
+	./node_modules/karma/bin/karma start --single-run
 
-cljstest: cljs-browser-test cljs-node-test
+test-cljs: node_modules test-nodejs test-browser
 
-test: cljtest cljstest
+test: test-clj test-cljs
 
 src/deps.cljs: package.json
 	clojure -M:js-deps
@@ -43,3 +42,4 @@ clean:
 	rm -rf target
 	rm -rf out
 	rm -rf cljs-test-runner-out
+	rm -rf node_modules

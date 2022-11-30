@@ -15,9 +15,9 @@ jobs:
         with:
           install: true
       - name: Run CLJ tests
-        run: script/run-in-docker.sh make cljtest
+        run: script/run-in-docker.sh make test-clj
       - name: Run CLJS tests
-        run: script/run-in-docker.sh make cljstest
+        run: script/run-in-docker.sh make test-cljs
       - name: Notify Slack fail
         if: failure()
         env:
