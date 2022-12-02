@@ -360,7 +360,7 @@ You will also need the NodeJS and NPM tools installed.
 
 You can run the CLJ and CLJS test suites like this: `make test`.
 
-If you want to run one or the other you can do `make test-clj` or `make test-cljs`.
+If you want to run one or the other you can do `make cljtest` or `make cljstest`.
 
 ### Building
 

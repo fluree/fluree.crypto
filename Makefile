@@ -13,17 +13,17 @@ package-lock.json: package.json
 
 node_modules: package.json package-lock.json
 
-test-clj:
+cljtest:
 	clojure -M:test-clj
 
-test-nodejs:
+nodetest:
 	npx shadow-cljs release node-test
 
-test-browser:
+browsertest:
 	npx shadow-cljs release browser-test
 	./node_modules/karma/bin/karma start --single-run
 
-test-cljs: node_modules test-nodejs test-browser
+cljstest: node_modules nodetest browsertest
 
 test: test-clj test-cljs
 
