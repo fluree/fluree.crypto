@@ -5,13 +5,16 @@
             [fluree.crypto.secp256k1 :as secp256k1]))
 
 (def JOSE-header
-  "The JOSE header for a secp256k1 signing key. https://github.com/decentralized-identity/EcdsaSecp256k1RecoverySignature2020"
+  "The JOSE header for a secp256k1 signing key.
+  https://github.com/decentralized-identity/EcdsaSecp256k1RecoverySignature2020"
   "{\"alg\":\"ES256K-R\",\"b64\":false,\"crit\":[\"b64\"]}")
 
 (defn b64
   "Convert to base64url and remove the trailing padding (=)."
   [s]
-  (str/replace (alphabase/base-to-base s :string :base64url) "=" ""))
+  (-> s
+      (alphabase/base-to-base :string :base64url)
+      (str/replace "=" "")))
 
 (defn sign
   [signing-input signing-key]
@@ -35,24 +38,25 @@
 
 (defn verify
   [jws]
-  (let [[b64-header b64-payload b64-sig] (str/split jws #"\.")
+  (when (string? jws)
+    (let [[b64-header b64-payload b64-sig] (str/split jws #"\.")
 
-        header  (alphabase/base-to-base b64-header :base64url :string)
-        payload (alphabase/base-to-base b64-payload :base64url :string)
-        sig     (alphabase/base-to-base b64-sig :base64url :string)
+          header  (alphabase/base-to-base b64-header :base64url :string)
+          payload (alphabase/base-to-base b64-payload :base64url :string)
+          sig     (alphabase/base-to-base b64-sig :base64url :string)
 
-        signing-input (str b64-header "." b64-payload)
-        pubkey        (secp256k1/recover-public-key signing-input sig)]
-    (when (not= header JOSE-header)
-      (throw (ex-info "Unsupported jws header."
-                      {:error :jws/unknown-signing-algorithm
-                       :supported-header JOSE-header
-                       :header header
-                       :jws jws})))
-    (when (not (secp256k1/verify pubkey signing-input sig))
-      (throw (ex-info "Verification failed." {:error :jws/invalid-signature
-                                              :jws jws})))
-    {:payload payload :pubkey pubkey}))
+          signing-input (str b64-header "." b64-payload)
+          pubkey        (secp256k1/recover-public-key signing-input sig)]
+      (when (not= header JOSE-header)
+        (throw (ex-info "Unsupported JWS header."
+                        {:error :jws/unknown-signing-algorithm
+                         :supported-header JOSE-header
+                         :header header
+                         :jws jws})))
+      (when (not (secp256k1/verify pubkey signing-input sig))
+        (throw (ex-info "JWS verification failed." {:error :jws/invalid-signature
+                                                    :jws jws})))
+      {:payload payload :pubkey pubkey})))
 
 (comment
   (b64 "{\"typ\":\"JWT\",\"alg\":\"ES256K-R\"}")
