@@ -1,14 +1,15 @@
 (ns fluree.crypto
   (:require
-    [fluree.crypto.sha2 :as sha2]
-    [fluree.crypto.sha3 :as sha3]
-    [fluree.crypto.aes :as aes]
-    [fluree.crypto.scrypt :as scrypt]
-    [fluree.crypto.ripemd :as ripemd]
-    [fluree.crypto.secp256k1 :as secp256k1]
-    #?@(:cljs [[goog.crypt :as gcrypt]
-               [goog.object :as gobj]])
-    [alphabase.core :as alphabase])
+   [alphabase.core :as alphabase]
+   [fluree.crypto.aes :as aes]
+   [fluree.crypto.jws :as jws]
+   [fluree.crypto.ripemd :as ripemd]
+   [fluree.crypto.scrypt :as scrypt]
+   [fluree.crypto.secp256k1 :as secp256k1]
+   [fluree.crypto.sha2 :as sha2]
+   [fluree.crypto.sha3 :as sha3]
+   #?@(:cljs [[goog.crypt :as gcrypt]
+              [goog.object :as gobj]]))
   #?(:clj
      (:import (java.text Normalizer Normalizer$Form))))
 
@@ -196,6 +197,16 @@
   [n]
   (scrypt/random-bytes n))
 
+(defn ^:export create-jws
+  "Sign a string with the secp256k1 private key."
+  [s private-key]
+  (jws/serialize-jws s private-key))
+
+(defn ^:export verify-jws
+  "Verify the supplied compact JWS. If valid, returns the base64 decoded payload and the
+  public key. If invalid, returns nil."
+  [jws]
+  (jws/verify jws))
 
 (comment
 
@@ -207,48 +218,45 @@
   (= public (pub-key-from-private private))
 
   (sha2-256 "hi there")
-  ; CLJS + CLJ:
-  ; "9b96a1fe1d548cbbc960cc6a0286668fd74a763667b06366fb2324269fcabaa4"
+  ;; CLJS + CLJ:
+  ;; "9b96a1fe1d548cbbc960cc6a0286668fd74a763667b06366fb2324269fcabaa4"
 
   (sha2-256-normalize (str "\u0041\u030a" "pple"))
   (sha2-256-normalize (str "\u00C5" "pple"))
-  ; CLJS + CLJ
-  ; For both: "58acf888b520fe51ecc0e4e5eef46c3bea3ca7df4c11f6719a1c2471bbe478bf"
-
+  ;; CLJS + CLJ
+  ;; For both: "58acf888b520fe51ecc0e4e5eef46c3bea3ca7df4c11f6719a1c2471bbe478bf"
 
   (sha2-512 "hi there")
-  ; CLJS + CLJ:
-  ; "db5227a40901a06d455f7666be017c6abbbafdfb3327f4a996d375c3fd020a2bfe464b7cee18caa5d23edf308b76ae623dc8b2b0cec98dc96219ad741b67f5bd"
+  ;; CLJS + CLJ:
+  ;; "db5227a40901a06d455f7666be017c6abbbafdfb3327f4a996d375c3fd020a2bfe464b7cee18caa5d23edf308b76ae623dc8b2b0cec98dc96219ad741b67f5bd"
 
   (sha2-512-normalize (str "\u00C5" "pple"))
   (sha2-512-normalize (str "\u0041\u030a" "pple"))
-  ; CLJS + CLJ ->
-  ; For both: "6c406d5e0a5910aeee9adf14425427aa864d55e3dce675eae68d4ad5d6d560199667ac6c8186091f83041f4c8708573881d93ba0e47717bf491a06820a84efef"
+  ;; CLJS + CLJ ->
+  ;; For both: "6c406d5e0a5910aeee9adf14425427aa864d55e3dce675eae68d4ad5d6d560199667ac6c8186091f83041f4c8708573881d93ba0e47717bf491a06820a84efef"
 
   (sha3-256 "hi there")
-  ; CLJS + CLJ:
-  ; "f721a1afff8300e03f24a45d337b9a9aa630ca8b7f2b8dca94b44be78e554fa5"
+  ;; CLJS + CLJ:
+  ;; "f721a1afff8300e03f24a45d337b9a9aa630ca8b7f2b8dca94b44be78e554fa5"
 
   (sha3-256-normalize (str "\u0041\u030a" "pple"))
   (sha3-256-normalize (str "\u00C5" "pple"))
-  ; CLJS + CLJ:
-  ; For both: "56ccd25281a278146afa6770378d0c6949959adb84ad1c688951b7bb4af22401"
+  ;; CLJS + CLJ:
+  ;; For both: "56ccd25281a278146afa6770378d0c6949959adb84ad1c688951b7bb4af22401"
 
   (sha3-512 "hi there")
-  ; CLJS + CLJ:
-  ; "4297c279eb3c3ffa693cb856ecdb916a1ad8398cc79b5f7f8420684d77e0a153b96a5e3fe48438bc66f5a56efb25eef5927cb396a4313a38d503d09734154467"
+  ;; CLJS + CLJ:
+  ;; "4297c279eb3c3ffa693cb856ecdb916a1ad8398cc79b5f7f8420684d77e0a153b96a5e3fe48438bc66f5a56efb25eef5927cb396a4313a38d503d09734154467"
 
   (sha3-512-normalize (str "\u0041\u030a" "pple"))
   (sha3-512-normalize (str "\u00C5" "pple"))
-  ;  CLJS + CLJ:
-  ; For both:
-  ; "085fb750a248ee4206d9255a2082ae5b17b9582f0fd856e75257fec427d329c91ebb67b9c3b49a713aa2a14595bf094f78de2d359b38903bae2388beb49f206d"
-
+  ;;  CLJS + CLJ:
+  ;; For both:
+  ;; "085fb750a248ee4206d9255a2082ae5b17b9582f0fd856e75257fec427d329c91ebb67b9c3b49a713aa2a14595bf094f78de2d359b38903bae2388beb49f206d"
 
   (ripemd-160 "hi there")
-  ; CLJS + CLJ:
-  ; 6bbf1bb4ef616c675347ca0044f3997fc8ca3921
-
+  ;; CLJS + CLJ:
+  ;; 6bbf1bb4ef616c675347ca0044f3997fc8ca3921
 
   (aes-encrypt "hi" "there")
   ;; CLJ + CLJS
@@ -265,7 +273,7 @@
   (aes-decrypt (aes-encrypt-normalize (str "\u00C5" "pple") "there") "there")
   ;; CLJ + CLJS
   (aes-encrypt-normalize (str "\u00C5" "pple") "there")
-  ;ead3c7632061dd6835477d12ea51f85b
+  ;; ead3c7632061dd6835477d12ea51f85b
 
   (def account-id (account-id-from-private private))
   ;; CLJ + CLJS
@@ -279,7 +287,7 @@
   ;; CLJ + CLJS
 
   (= public (pub-key-from-message "hi" sig))
-  ; CLJ + CLJS
+  ;; CLJ + CLJS
 
   (= account-id (account-id-from-message "hi" sig))
   ;; CLJ + CLJS
@@ -293,9 +301,6 @@
   ;; CLJ  + CLJS
   ;; "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4"
 
-  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1))
+  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1)
   ;; CLJ + CLJS
-
-
-
-
+  ,)
