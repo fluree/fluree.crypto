@@ -197,6 +197,16 @@
   [n]
   (scrypt/random-bytes n))
 
+(defn ^:export create-jws
+  "Sign a string with the secp256k1 private key."
+  [s private-key]
+  (jws/serialize-jws s private-key))
+
+(defn ^:export verify-jws
+  "Verify the supplied compact JWS. If valid, returns the base64 decoded payload and the
+  public key. If invalid, returns nil."
+  [jws]
+  (jws/verify jws))
 
 (comment
 
