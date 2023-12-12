@@ -25,7 +25,7 @@ browsertest:
 
 cljstest: node_modules nodetest browsertest
 
-test: test-clj test-cljs
+test: cljtest cljstest
 
 src/deps.cljs: package.json
 	clojure -M:js-deps
