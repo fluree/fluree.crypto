@@ -16,7 +16,9 @@
              (let [hash-ba (byte-array (.getDigestSize digest))]
                (.doFinal digest hash-ba 0)
                hash-ba))
-     :cljs (js-sha3/sha3 hash-size ba)))
+     :cljs (case hash-size
+             256 (.array js-sha3/sha3_256 ba)
+             512 (.array js-sha3/sha3_512 ba))))
 
 
 (defn ^:export sha3-256
