@@ -1,5 +1,5 @@
 {:deps  {org.clojure/clojure             {:mvn/version "1.11.1"}
-         org.clojure/clojurescript       {:mvn/version "1.11.60"}
+         org.clojure/clojurescript       {:mvn/version "1.11.121"}
          com.fluree/alphabase            {:mvn/version "3.3.0"}
          org.bouncycastle/bcprov-jdk15on {:mvn/version "1.70"}
          com.lambdaworks/scrypt          {:mvn/version "1.4.0"}}
@@ -12,13 +12,13 @@
 
   :dev
   {:extra-paths ["dev", "test"]
-   :extra-deps  {thheller/shadow-cljs {:mvn/version "2.20.5"}}}
+   :extra-deps  {thheller/shadow-cljs {:mvn/version "2.26.3"}}}
 
   :test-clj
   {:extra-paths ["test"]
    :extra-deps  {com.cognitect/test-runner
                  {:git/url "https://github.com/cognitect-labs/test-runner.git"
-                  :sha     "a85b3b02765fb68684ab9ee4a8598eacf7e471d2"}}
+                  :sha     "7284cda41fb9edc0f3bc6b6185cfb7138fc8a023"}}
    :main-opts   ["-m" "cognitect.test-runner"]}
 
   :js-deps
@@ -58,5 +58,5 @@
    :main-opts  ["-m" "antq.core"]}
 
   :clj-kondo
-  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2022.09.08"}}
+  {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2023.12.15"}}
    :main-opts  ["-m" "clj-kondo.main" "--lint" "src" "--config" ".clj-kondo/config.edn"]}}}
