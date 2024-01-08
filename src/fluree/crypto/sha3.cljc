@@ -2,7 +2,8 @@
   (:refer-clojure :exclude [hash])
   (:require [alphabase.core :as alphabase]
             #?@(:cljs [["js-sha3" :as js-sha3]]))
-  #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest SHA256Digest SHA3Digest GeneralDigest))))
+  #?(:clj (:import (org.bouncycastle.crypto.digests RIPEMD160Digest SHA256Digest
+                                                    SHA3Digest GeneralDigest))))
 
 #?(:clj (set! *warn-on-reflection* true))
 

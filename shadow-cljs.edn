@@ -8,6 +8,6 @@
    :compiler-options {:optimizations :simple}}
 
   :browser-test                         ; runs the cljs tests in the browser via karma
-  {:target    :karma
-   :build-hooks      [(shadow.cljs.build-report/hook)]
-   :output-to "test/browser/browser-tests.js"}}}
+  {:target      :karma
+   :build-hooks [(shadow.cljs.build-report/hook)]
+   :output-to   "test/browser/browser-tests.js"}}}

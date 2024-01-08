@@ -1,7 +1,7 @@
 (ns fluree.crypto.secp256k1-test
   "These tests are run many times on random data because we have had several
   intermittent failures in this code (e.g. random numerical values with leading
-  zeroes getting truncated and then causing 'incorrect length' errors later on."
+  zeroes getting truncated and then causing 'incorrect length' errors later on)."
   (:require #?@(:clj  [[clojure.test :refer :all]]
                 :cljs [[cljs.test :refer-macros [deftest is testing]]])
             [fluree.crypto.test-utils :refer [random-string]]
