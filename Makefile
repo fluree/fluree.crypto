@@ -4,7 +4,7 @@ SOURCES := $(shell find src)
 RESOURCES := $(shell find resources)
 
 target/fluree-crypto.jar: deps.edn src/deps.cljs node_modules $(SOURCES) $(RESOURCES)
-	clojure -X:jar
+	clojure -T:build jar
 
 jar: target/fluree-crypto.jar
 
@@ -31,15 +31,12 @@ src/deps.cljs: package.json
 	clojure -M:js-deps
 
 install: target/fluree-crypto.jar
-	clojure -M:install
+	clojure -T:build install
 
 # You'll need to set the env vars CLOJARS_USERNAME & CLOJARS_PASSWORD
 # (which must be a Clojars deploy token now) to use this.
 deploy: target/fluree-crypto.jar
-	clojure -M:deploy
+	clojure -T:build deploy
 
 clean:
-	rm -rf target
-	rm -rf out
-	rm -rf cljs-test-runner-out
-	rm -rf node_modules
+	clojure -T:build clean
