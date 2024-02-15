@@ -25,12 +25,12 @@
 #?(:clj (set! *warn-on-reflection* true))
 
 (defonce ^:private ^ECDomainParameters secp256k1
-         #?(:cljs (.. sjcl -ecc -curves -k256)
-            :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
-                    (ECDomainParameters. (.getCurve params)
-                                         (.getG params)
-                                         (.getN params)
-                                         (.getH params)))))
+  #?(:cljs (.. sjcl -ecc -curves -k256)
+     :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
+             (ECDomainParameters. (.getCurve params)
+                                  (.getG params)
+                                  (.getN params)
+                                  (.getH params)))))
 
 (defonce modulus #?(:clj  (.getN secp256k1)
                     :cljs (.-r secp256k1)))
@@ -42,8 +42,8 @@
   #?(:clj  (and (<= 1 private)
                 (<= private modulus))
      :cljs (and
-             (bn/>= private 1)
-             (bn/>= modulus private))))
+            (bn/>= private 1)
+            (bn/>= modulus private))))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -71,7 +71,6 @@ public key, hex encoded."
                        (.replace #"^0x" "") encodings/pad-hex))]
     {:private (encodings/biginteger->hex private)
      :public  (encodings/x962-encode x y)}))
-
 
 (defn public-key-from-private
   [private]
@@ -117,14 +116,13 @@ public key, hex encoded."
         ba           (->byte-array bytes)]
     (alphabase/byte-array-to-base ba output-format)))
 
-
 (defn ^:export new-private-key
   "Generates a new random private key."
   []
   #?(:clj  (let [gen                             (doto (ECKeyPairGenerator.)
                                                    (.init (ECKeyGenerationParameters.
-                                                            secp256k1
-                                                            (SecureRandom.))))
+                                                           secp256k1
+                                                           (SecureRandom.))))
                  keypair                         (.generateKeyPair gen)
                  ^ECPrivateKeyParameters private (.getPrivate keypair)]
              (.getD private))
@@ -148,7 +146,6 @@ public key, hex encoded."
   "Returns key pair in hex format using X9.62 compressed encoding for public key."
   ([] (format-key-pair (generate-key-pair*)))
   ([private] (format-key-pair (generate-key-pair* private))))
-
 
 ;; adapted from https://github.com/Sepia-Officinalis/secp256k1
 (defn deterministic-generate-k
@@ -177,7 +174,6 @@ public key, hex encoded."
              (-> (hmac/hmac-sha256 v k)
                  encodings/bytes->biginteger))))
 
-
 (defn- compute-recovery-byte
   "Compute a recovery byte for a compressed ECDSA signature given R and S parameters.
   Returns value as byte integer."
@@ -197,7 +193,6 @@ public key, hex encoded."
              (-> 0x1B
                  (+ (if (not= big-s? y-odd?) 1 0))
                  (+ (if big-r? 2 0))))))
-
 
 (defn ^:export sign-hash
   [^bytes hash-ba private-bn recovery-byte?]
@@ -235,9 +230,6 @@ public key, hex encoded."
       ; TODO: The DER fn converts hex to bytes and then we convert bytes back to hex here.
       ;       Can we optimize that a bit?
       (alphabase/bytes->hex der-sig))))
-
-
-
 
 (defn ^:export sign
   "Sign some message with provided private key.
@@ -291,14 +283,12 @@ public key, hex encoded."
          (-> (.mult sumPoint r-inv)
              format-public-key)))))
 
-
 (defn recover-public-key-from-hash
   "Recover a public key from a hash byte-array and signature (hex)."
   [hash signature]
   (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
         recover (int recover)]
     (ecrecover hash recover R S)))
-
 
 (defn recover-public-key
   "Recover a public key from original message and signature (hex) of the
@@ -308,7 +298,6 @@ public key, hex encoded."
                               (alphabase/string->bytes input)
                               input))]
     (recover-public-key-from-hash hash signature)))
-
 
 (defn verify-signature-from-hash
   [key hash signature]
@@ -327,14 +316,12 @@ public key, hex encoded."
                            :hash      hash
                            :signature signature})))))
 
-
 (defn ^:export verify
   "Verifies a message given a signature (in hex).
   Assumes signature is DER-encoded with a recovery byte."
   [pub-key message signature]
   (let [hash (sha2/sha2-256 (alphabase/string->bytes message))]
     (verify-signature-from-hash pub-key hash signature)))
-
 
 (comment
 

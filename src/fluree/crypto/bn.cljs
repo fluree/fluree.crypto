@@ -3,7 +3,7 @@
   of the sjcl/bn (BigNumber) library. For example, bn.greaterEquals doesn't
   return a boolean as you'd expect. It returns 1 if true, 0 if false. But 0 is
   truthy in Clojure(Script)!"
-  (:require ["@fluree/sjcl" :as sjcl])
+  (:require ["@fluree/sjcl"])
   (:refer-clojure :exclude [>=]))
 
 (defn >=

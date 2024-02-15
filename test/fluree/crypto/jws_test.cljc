@@ -4,7 +4,7 @@
 
 (def kp
   {:private "42827e1ee6580a3cd367f31c4af2528db7269b8ea30c6cdff0af6e52d0c4480a"
-   :public "03ef89c5add9879110a18f107fe0f71879af36296f2984040d9b2816958d22fbab"})
+   :public  "03ef89c5add9879110a18f107fe0f71879af36296f2984040d9b2816958d22fbab"})
 
 (deftest jws
   (let [s                 "abcdefg"
@@ -20,11 +20,11 @@
     (let [cljs-jws (str header-b64 "." payload-b64 "." cljs-expected-sig)
           clj-jws  (str header-b64 "." payload-b64 "." clj-expected-sig)
           {cljs-payload :payload
-           cljs-pubkey :pubkey}
+           cljs-pubkey  :pubkey}
           (crypto/verify-jws cljs-jws)
 
           {clj-payload :payload
-           clj-pubkey :pubkey}
+           clj-pubkey  :pubkey}
           (crypto/verify-jws clj-jws)]
       (testing "cross-platform verifiability"
         (is (= (:public kp) cljs-pubkey))
