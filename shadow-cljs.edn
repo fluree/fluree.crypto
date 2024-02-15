@@ -5,9 +5,13 @@
   {:target           :node-test
    :output-to        "test/nodejs/node-tests.js"
    :autorun          true
-   :compiler-options {:optimizations :simple}}
+   :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
+                      :optimizations :simple}}
 
-  :browser-test                         ; runs the cljs tests in the browser via karma
-  {:target      :karma
-   :build-hooks [(shadow.cljs.build-report/hook)]
-   :output-to   "test/browser/browser-tests.js"}}}
+  :browser-test ; runs the cljs tests in the browser via karma
+  {:target           :karma
+   :build-hooks      [(shadow.cljs.build-report/hook)]
+   :compiler-options {:infer-externs true
+                      :externs       ["sjcl-externs.js"]
+                      :pseudo-names  true}
+   :output-to        "test/browser/browser-tests.js"}}}
