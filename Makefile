@@ -51,11 +51,14 @@ out/browser/fluree-crypto.js: shadow-cljs.edn node_modules $(SOURCES)
 
 browser: out/browser/fluree-crypto.js
 
+dist/fluree-crypto.d.ts: out/nodejs/fluree-crypto.js
+	npx tsc
+
 dist/%/fluree-crypto.js: out/%/fluree-crypto.js
 	mkdir -p $(@D)
 	cp $< $@
 
-js-package: dist/nodejs/fluree-crypto.js dist/browser/fluree-crypto.js
+js-package: dist/nodejs/fluree-crypto.js dist/browser/fluree-crypto.js dist/fluree-crypto.d.ts
 
 clean:
 	clojure -T:build clean
