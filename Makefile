@@ -1,4 +1,4 @@
-.PHONY: all cljtest cljstest test jar install deploy node js-package clean
+.PHONY: all cljtest cljstest test jar install deploy node browser js-package clean
 
 SOURCES := $(shell find src)
 RESOURCES := $(shell find resources)
@@ -46,11 +46,16 @@ out/nodejs/fluree-crypto.js: shadow-cljs.edn node_modules $(SOURCES)
 
 node: out/nodejs/fluree-crypto.js
 
+out/browser/fluree-crypto.js: shadow-cljs.edn node_modules $(SOURCES)
+	clojure -T:build browser
+
+browser: out/browser/fluree-crypto.js
+
 dist/%/fluree-crypto.js: out/%/fluree-crypto.js
 	mkdir -p $(@D)
 	cp $< $@
 
-js-package: dist/nodejs/fluree-crypto.js
+js-package: dist/nodejs/fluree-crypto.js dist/browser/fluree-crypto.js
 
 clean:
 	clojure -T:build clean
