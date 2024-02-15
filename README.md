@@ -11,7 +11,7 @@ A collection of Javascript cryptography functions for Fluree.
 
 Normalizes string using the [NKFC](http://unicode.org/reports/tr15/) standard to ensure consistent hashing.
 
-`const normalApple = crypto.normalize_string("\u0041\u030apple")`
+`const normalApple = crypto.normalizeString("\u0041\u030apple")`
 
 For example, we can see that:
 
@@ -30,7 +30,7 @@ This functions normalizes a string and returns a byte-array. If it is already a 
 
 For example:
 
-`crypto.string__GT_byte_array("hi there")` results in `[104, 105, 32, 116, 104, 101, 114, 101]`.
+`crypto.stringToByteArray("hi there")` results in `[104, 105, 32, 116, 104, 101, 114, 101]`.
 
 
 ### Byte Array to String
@@ -40,7 +40,7 @@ For example:
 
 This functions takes a byte-array and returns a string.
 
-`crypto.byte_array__GT_string([104, 105, 32, 116, 104, 101, 114, 101])` results in `hi there`.
+`crypto.byteArrayToString([104, 105, 32, 116, 104, 101, 114, 101])` results in `hi there`.
 
 ## Public-key Cryptography
 
@@ -51,7 +51,7 @@ This functions takes a byte-array and returns a string.
 
 This function will return a map with a public and private key:
 
-`crypto.generate_key_pair();` will return a valid public-private key pair.
+`crypto.generateKeyPair();` will return a valid public-private key pair.
 
 For example, this might return:
 
@@ -60,7 +60,7 @@ public: "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391"}`.
 
 You can also call this function with a private key already provided.
 
-`crypto.generate_key_pair("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
+`crypto.generateKeyPair("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
 
 This will return:
 
@@ -74,7 +74,7 @@ public: "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391"}`.
 
 Given a private key, this returns a public key:
 
-`crypto.pub_key_from_private("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
+`crypto.pubKeyFromPrivate("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
 
 This will return: `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391`;
 
@@ -85,7 +85,7 @@ This will return: `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4
 
 Given a private key, this will return an account id:
 
-`crypto.account_id_from_private("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
+`crypto.accountIdFromPrivate("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
 
 This will return `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
 
@@ -96,7 +96,7 @@ This will return `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
 
 Given a public key, this will return an account id:
 
-`crypto.account_id_from_public("02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391");`
+`crypto.accountIdFromPublic("02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391");`
 
 This will return `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
 
@@ -111,7 +111,7 @@ Given a message and a private key, this will return a signature.
 const message = "hi there";
 const privateKey = "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2";
 
-crypto.sign_message(message, privateKey);
+crypto.signMessage(message, privateKey);
 ```
 
 This returns:
@@ -130,9 +130,9 @@ Given a public key, message, and a signature, this function will return true or 
 const message = "hi there";
 const privateKey = "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2";
 const publicKey = "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391";
-const signature = crypto.sign_message(message, privateKey);
+const signature = crypto.signMessage(message, privateKey);
 
-crypto.verify_signature(publicKey, message, signature);
+crypto.verifySignature(publicKey, message, signature);
 
 ```
 
@@ -145,9 +145,9 @@ This returns `true`.
 
 ```
 const message = "hi there";
-const signature = crypto.sign_message(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
+const signature = crypto.signMessage(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
 
-crypto.pub_key_from_message(message, signature);
+crypto.pubKeyFromMessage(message, signature);
 ```
 
 This returns `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391`.
@@ -159,9 +159,9 @@ This returns `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391
 
 ```
 const message = "hi there";
-const signature = crypto.sign_message(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
+const signature = crypto.signMessage(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
 
-crypto.account_id_from_message(message, signature);
+crypto.accountIdFromMessage(message, signature);
 ```
 
 This returns `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
@@ -279,7 +279,7 @@ const initialization_vector = [6, 224, 71, 170, 241, 204, 115, 21, 30, 8, 46, 22
 const message = "hi";
 const key = "there";
 
-crypto.aes_encrypt(message, initialization_vector, key);
+crypto.aesEncrypt(message, initialization_vector, key);
 ```
 
 This returns: `668cd07d1a17cc7a8a0390cf017ac7ef`.
@@ -293,9 +293,9 @@ This returns: `668cd07d1a17cc7a8a0390cf017ac7ef`.
 const initialization_vector = [6, 224, 71, 170, 241, 204, 115, 21, 30, 8, 46, 223, 106, 207, 55, 42];
 const message = "hi";
 const key = "there";
-const encrypted = crypto.aes_encrypt(message, initialization_vector, key);
+const encrypted = crypto.aesEncrypt(message, initialization_vector, key);
 
-crypto.aes_decrypt(encrypted, initialization_vector, key);
+crypto.aesDecrypt(encrypted, initialization_vector, key);
 ```
 
 This returns: `hi`.
@@ -317,7 +317,7 @@ The arguments by default:
 ```
 const salt = [172, 28, 242, 108, 175, 130, 214, 6, 249, 61, 244, 178, 34, 8, 13, 178];
 
-crypto.scrypt_encrypt("hi", salt)
+crypto.scryptEncrypt("hi", salt)
 ```
 
 This results in `57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4`.
@@ -336,9 +336,9 @@ The arguments by default:
 ```
 const salt = [172, 28, 242, 108, 175, 130, 214, 6, 249, 61, 244, 178, 34, 8, 13, 178];
 
-crypto.scrypt_encrypt("hi", salt, 32768, 8, 1)
+crypto.scryptEncrypt("hi", salt, 32768, 8, 1)
 
-crypto.scrypt_check("hi", "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4", salt, 32768, 8, 1)
+crypto.scryptCheck("hi", "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4", salt, 32768, 8, 1)
 ```
 
 ## Contributing
@@ -364,7 +364,22 @@ If you want to run one or the other you can do `make cljtest` or `make cljstest`
 
 ### Building
 
-Run `make` to build the library. It will create or update `target/fluree-crypto.jar`.
+#### ClojureScript
+
+Run `make` to build the CLJS library JAR. It will create or update
+`target/fluree-crypto.jar`.
+
+To test this in another CLJS project, just point that project's `deps.edn`
+`:deps` entry at `:local/root "../path/to/fluree.crypto"`.
+
+#### Node
+
+Run `make node` to build the NodeJS library in `out/nodejs/fluree-crypto.js`.
+
+To test this in another Node project, run `npm install --save
+../path/to/fluree.crypto`. That will point `@fluree/crypto` at this working
+directory.
+
 
 ### Installing
 
@@ -377,6 +392,10 @@ You can install the JAR locally with:
 You can deploy to Clojars with the following:
 
 `env CLOJARS_USERNAME=your-user CLOJARS_PASSWORD=your-deploy-token make deploy`
+
+You can deploy to npmjs.com with the following:
+
+`npm publish`
 
 ### CI/CD
 

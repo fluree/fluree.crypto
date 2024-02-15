@@ -1,4 +1,15 @@
 {
+  "name": "@fluree/crypto",
+  "version": "1.0.1",
+  "description": "Cryptography library for Fluree",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fluree/fluree.crypto.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": "./dist/nodejs/fluree-crypto.js",
   "devDependencies": {
     "colors": "^1.4.0",
     "karma": "^6.3.4",
@@ -10,5 +21,7 @@
     "@cljs-oss/module-deps": "^1.1.1",
     "@fluree/sjcl": "^1.0.8-3",
     "js-sha3": "^0.9.3"
-  }
+  },
+  "author": "Fluree, PBC",
+  "license": "MIT"
 }

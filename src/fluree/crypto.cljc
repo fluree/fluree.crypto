@@ -208,6 +208,36 @@
   [jws]
   (jws/verify jws))
 
+#?(:cljs
+   (def ^:export js-exports
+     #js {:normalizeString      normalize-string
+          :stringToByteArray    string->byte-array
+          :byteArrayToString    byte-array->string
+          :sha2_256             sha2-256
+          :sha2_256_normalize   sha2-256-normalize
+          :sha2_512             sha2-512
+          :sha2_512_normalize   sha2-512-normalize
+          :sha3_256             sha3-256
+          :sha3_256_normalize   sha3-256-normalize
+          :sha3_512             sha3-512
+          :sha3_512_normalize   sha3-512-normalize
+          :ripemd_160           ripemd-160
+          :aesEncrypt           aes-encrypt
+          :aesDecrypt           aes-decrypt
+          :generateKeyPair      generateKeyPair
+          :pubKeyFromPrivate    pub-key-from-private
+          :accountIdFromPublic  account-id-from-public
+          :accountIdFromPrivate account-id-from-private
+          :signMessage          sign-message
+          :verifySignature      verify-signature
+          :pubKeyFromMessage    pub-key-from-message
+          :accountIdFromMessage account-id-from-message
+          :scryptEncrypt        scrypt-encrypt
+          :scryptCheck          scrypt-check
+          :randomBytes          random-bytes
+          :createJWS            create-jws
+          :verifyJWS            verify-jws}))
+
 (comment
 
   (def kp (generate-key-pair))
