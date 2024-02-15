@@ -1,7 +1,9 @@
-.PHONY: cljtest cljstest test jar install deploy clean
+.PHONY: all cljtest cljstest test jar install deploy node js-package clean
 
 SOURCES := $(shell find src)
 RESOURCES := $(shell find resources)
+
+all: jar js-package
 
 target/fluree-crypto.jar: deps.edn src/deps.cljs node_modules $(SOURCES) $(RESOURCES)
 	clojure -T:build jar
@@ -12,6 +14,7 @@ package-lock.json: package.json
 	npm install
 
 node_modules: package.json package-lock.json
+	npm install && touch $?
 
 cljtest:
 	clojure -M:test-clj
@@ -37,6 +40,17 @@ install: target/fluree-crypto.jar
 # (which must be a Clojars deploy token now) to use this.
 deploy: target/fluree-crypto.jar
 	clojure -T:build deploy
+
+out/nodejs/fluree-crypto.js: shadow-cljs.edn node_modules $(SOURCES)
+	clojure -T:build node
+
+node: out/nodejs/fluree-crypto.js
+
+dist/%/fluree-crypto.js: out/%/fluree-crypto.js
+	mkdir -p $(@D)
+	cp $< $@
+
+js-package: dist/nodejs/fluree-crypto.js
 
 clean:
 	clojure -T:build clean
