@@ -303,4 +303,4 @@
 
   (scrypt-check "hi" scrypt-hex mysalt 32768 8 1)
   ;; CLJ + CLJS
-  ,)
+  )

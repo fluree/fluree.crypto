@@ -1,13 +1,11 @@
 (ns fluree.crypto.asn1
   (:require ["@fluree/sjcl" :as sjcl]))
 
-
 ;; TODO - convert this library to work on bytes, and do hex conversion as needed outside here
 
 (defn encode-asn1-length-hex
   [len]
   (.toString len 16))
-
 
 (defn decode-asn1-length
   [asn1]
@@ -19,20 +17,18 @@
     {:length    len
      :remaining (subs asn1 2)}))
 
-
 (defn format-asn1-unsigned-integer-hex
   "Formats a hexadecimal encoding an unsigned integer, dropping left zeros and
   padding with a left zero if necessary to avoid being confused for a two's complement"
   [n]
   (let [bytes  (drop-while zero? (-> n sjcl/codec.hex.toBits sjcl/codec.bytes.fromBits))
         bytes* (clj->js
-                 (if-not (zero? (bit-and (first bytes) 0x80))
-                   (cons 0 bytes)
-                   bytes))]
+                (if-not (zero? (bit-and (first bytes) 0x80))
+                  (cons 0 bytes)
+                  bytes))]
     (-> bytes*
         sjcl/codec.bytes.toBits
         sjcl/codec.hex.fromBits)))
-
 
 (defn format-asn1-unsigned-integer
   "Formats a byte encoded unsigned integer, dropping left zeros and
@@ -42,7 +38,6 @@
     (if-not (zero? (bit-and (first bytes) 0x80))
       (clj->js (cons 0 bytes))
       bytes)))
-
 
 (defn encode-asn1-unsigned-integer-hex
   "Formats a hexadecimal as an unsigned integer, padding and prepending a length"
@@ -54,14 +49,12 @@
                         encode-asn1-length-hex)]
     (str "02" len formatted-n)))
 
-
 (defn encode-asn1-unsigned-integer
   "Formats a byte array as an unsigned integer, padding and prepending a length"
   [ba]
   (let [formatted-n (format-asn1-unsigned-integer ba)
         size        (count formatted-n)]
     (clj->js (concat [2 size] formatted-n))))
-
 
 (defn decode-asn1-integer
   "Decodes an int from the top of an ASN.1 encoded string"
@@ -70,7 +63,6 @@
   (let [{:keys [length remaining]} (decode-asn1-length (subs asn1 2))]
     {:integer   (subs remaining 0 (* 2 length))
      :remaining (subs remaining (* 2 length))}))
-
 
 (comment
   (in-ns 'fluree.crypto.asn1)
