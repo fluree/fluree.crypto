@@ -8,7 +8,7 @@
    :output-to        "test/nodejs/node-tests.js"
    :autorun          true
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
-                      :optimizations :simple}}
+                      :externs       ["sjcl-externs.js"]}}
 
   :browser-test ; runs the cljs tests in the browser via karma
   {:target           :karma
@@ -22,7 +22,7 @@
   {:target           :node-library
    :output-to        "out/nodejs/fluree-crypto.js"
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
-                      :optimizations :simple}
+                      :externs       ["sjcl-externs.js"]}
    :exports-var      fluree.crypto/js-exports}
 
   :browser
