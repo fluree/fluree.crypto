@@ -13,7 +13,6 @@
 
   :cljs-browser-test ; runs the cljs tests in the browser via karma
   {:target           :karma
-   :build-hooks      [(shadow.cljs.build-report/hook)]
    :compiler-options {:infer-externs true
                       :externs       ["sjcl-externs.js"]
                       :pseudo-names  true}
@@ -30,6 +29,7 @@
   :browser
   {:target           :esm
    :output-dir       "out/browser/"
+   :build-hooks      [(shadow.cljs.build-report/hook)]
    :compiler-options {:infer-externs true
                       :externs       ["sjcl-externs.js"]}
    :modules          {:fluree-crypto
