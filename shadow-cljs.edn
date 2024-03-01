@@ -8,6 +8,7 @@
    :output-to        "out/nodejs-test/node-tests.js"
    :autorun          true
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
+                      :optimizations :simple
                       :externs       ["sjcl-externs.js"]}}
 
   :browser-test ; runs the cljs tests in the browser via karma
