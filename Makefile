@@ -28,7 +28,10 @@ cljs-browser-test:
 
 cljstest: node_modules cljs-node-test cljs-browser-test
 
-test: cljtest cljstest
+node-test: out/nodejs/fluree-crypto.js
+	cd test/nodejs && npm install && node --experimental-vm-modules node_modules/jest/bin/jest.js
+
+test: cljtest cljstest node-test
 
 src/deps.cljs: package.json
 	clojure -M:js-deps
