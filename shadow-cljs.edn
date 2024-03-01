@@ -3,7 +3,7 @@
  :dev-http {8000 "out/browser"}
 
  :builds
- {:node-test ; runs the cljs tests on node
+ {:cljs-node-test ; runs the cljs tests on node
   {:target           :node-test
    :output-to        "out/nodejs-test/node-tests.js"
    :autorun          true
@@ -11,7 +11,7 @@
                       :optimizations :simple
                       :externs       ["sjcl-externs.js"]}}
 
-  :browser-test ; runs the cljs tests in the browser via karma
+  :cljs-browser-test ; runs the cljs tests in the browser via karma
   {:target           :karma
    :build-hooks      [(shadow.cljs.build-report/hook)]
    :compiler-options {:infer-externs true
