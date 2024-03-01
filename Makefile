@@ -62,3 +62,5 @@ js-package: dist/nodejs/fluree-crypto.js dist/browser/fluree-crypto.js dist/flur
 
 clean:
 	clojure -T:build clean
+	rm -rf out/*
+	rm -rf node_modules

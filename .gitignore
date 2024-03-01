@@ -16,5 +16,3 @@ pom.xml
 /.nrepl-port
 .shadow-cljs
 .cljs_node_repl
-test/nodejs/*
-test/browser/*
