@@ -2,7 +2,7 @@ module.exports = function (config) {
   config.set({
     browsers: ['ChromeHeadless'],
     // The directory where the output file lives
-    basePath: 'test/browser/',
+    basePath: 'out/browser-test/',
     // The file itself
     files: ['browser-tests.js'],
     frameworks: ['cljs-test'],
