@@ -43,7 +43,7 @@ test("jws test", () => {
 
   const jws = flureecrypto.createJWS(secret, myprivkey);
   const verified = flureecrypto.verifyJWS(jws);
-  console.log("verified", verified);
+
   const {payload, pubkey} = verified;
 
   expect(payload).toStrictEqual(secret);
