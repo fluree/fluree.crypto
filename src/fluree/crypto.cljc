@@ -253,6 +253,11 @@
   (jws/verify jws))
 
 #?(:cljs
+   (defn ^:export verifyJWS
+     ([jws] (clj->js (jws/verify jws)))))
+
+
+#?(:cljs
    (def ^:export js-exports
      #js {:normalizeString      normalize-string
           :stringToByteArray    string->byte-array
@@ -280,7 +285,7 @@
           :scryptCheck          scrypt-check
           :randomBytes          random-bytes
           :createJWS            create-jws
-          :verifyJWS            verify-jws}))
+          :verifyJWS            verifyJWS}))
 
 (comment
 
