@@ -32,3 +32,20 @@ test("api contains all functions we expect", () => {
     );
 })
 
+test("jws test", () => {
+  const myprivkey = "42827e1ee6580a3cd367f31c4af2528db7269b8ea30c6cdff0af6e52d0c4480a";
+  const mypubkey = "03ef89c5add9879110a18f107fe0f71879af36296f2984040d9b2816958d22fbab";
+
+  const secret = "abcdefg";
+
+  const headerb64 = "eyJhbGciOiJFUzI1NkstUiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19";
+  const payloadb64 = "YWJjZGVmZw";
+
+  const jws = flureecrypto.createJWS(secret, myprivkey);
+  const verified = flureecrypto.verifyJWS(jws);
+  console.log("verified", verified);
+  const {payload, pubkey} = verified;
+
+  expect(payload).toStrictEqual(secret);
+  expect(pubkey).toStrictEqual(mypubkey);
+})
