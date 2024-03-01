@@ -1,4 +1,4 @@
-FROM clojure:tools-deps-1.10.3.1075-slim-bullseye
+FROM clojure:tools-deps-1.11.1.1435-bookworm-slim
 
 RUN mkdir -p /usr/src/fluree-crypto
 WORKDIR /usr/src/fluree-crypto
