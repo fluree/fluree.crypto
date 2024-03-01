@@ -23,7 +23,7 @@ cljs-node-test:
 	npx shadow-cljs release cljs-node-test
 
 cljs-browser-test:
-	npx shadow-cljs release cljs-browser-test
+	npm install && npx shadow-cljs release cljs-browser-test
 	./node_modules/karma/bin/karma start --single-run
 
 cljstest: node_modules cljs-node-test cljs-browser-test
