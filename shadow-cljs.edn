@@ -5,7 +5,7 @@
  :builds
  {:node-test ; runs the cljs tests on node
   {:target           :node-test
-   :output-to        "test/nodejs/node-tests.js"
+   :output-to        "out/nodejs-test/node-tests.js"
    :autorun          true
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
                       :externs       ["sjcl-externs.js"]}}
@@ -16,7 +16,7 @@
    :compiler-options {:infer-externs true
                       :externs       ["sjcl-externs.js"]
                       :pseudo-names  true}
-   :output-to        "test/browser/browser-tests.js"}
+   :output-to        "out/browser-test/browser-tests.js"}
 
   :node
   {:target           :node-library
