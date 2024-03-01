@@ -23,6 +23,7 @@
   {:target           :node-library
    :output-to        "out/nodejs/fluree-crypto.js"
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
+                      :optimizations :simple
                       :externs       ["sjcl-externs.js"]}
    :exports-var      fluree.crypto/js-exports}
 
