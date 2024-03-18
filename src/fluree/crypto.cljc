@@ -254,7 +254,7 @@
 
 #?(:cljs
    (defn ^:export verifyJWS
-     ([jws] (clj->js (jws/verify jws)))))
+     [jws] (clj->js (jws/verify jws))))
 
 
 #?(:cljs
