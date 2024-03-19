@@ -19,16 +19,19 @@ node_modules: package.json package-lock.json
 cljtest:
 	clojure -M:test-clj
 
-nodetest:
-	npx shadow-cljs release node-test
+cljs-node-test:
+	npx shadow-cljs release cljs-node-test
 
-browsertest:
-	npx shadow-cljs release browser-test
+cljs-browser-test:
+	npm install && npx shadow-cljs release cljs-browser-test
 	./node_modules/karma/bin/karma start --single-run
 
-cljstest: node_modules nodetest browsertest
+cljstest: node_modules cljs-node-test cljs-browser-test
 
-test: cljtest cljstest
+node-test: out/nodejs/fluree-crypto.js
+	cd test/nodejs && npm install && node --experimental-vm-modules node_modules/jest/bin/jest.js
+
+test: cljtest cljstest node-test
 
 src/deps.cljs: package.json
 	clojure -M:js-deps
@@ -62,3 +65,5 @@ js-package: dist/nodejs/fluree-crypto.js dist/browser/fluree-crypto.js dist/flur
 
 clean:
 	clojure -T:build clean
+	rm -rf out/*
+	rm -rf node_modules

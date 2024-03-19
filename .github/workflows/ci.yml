@@ -18,8 +18,10 @@ jobs:
         run: script/run-in-docker.sh make cljtest
       - name: Run CLJS tests
         run: script/run-in-docker.sh make cljstest
+      - name: Run Node tests
+        run: script/run-in-docker.sh make node-test
       - name: Notify Slack fail
-        if: failure()
+        if: github.ref == 'refs/heads/main' && failure()
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         uses: voxmedia/github-action-slack-notify-build@v2
