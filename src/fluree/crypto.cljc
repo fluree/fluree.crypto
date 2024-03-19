@@ -52,10 +52,6 @@
        sha2/sha2-256
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-(defn ^:export sha2-256-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha2-256 args))
-
 (defn ^:export sha2-256-normalize
   "sha2-256 hash of provided string after normalizing string."
   ([s] (sha2-256-normalize s :hex))
@@ -63,10 +59,6 @@
    (-> s
        normalize-string
        (sha2-256 output-format :string))))
-
-(defn ^:export sha2-256-normalize-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha2-256-normalize args))
 
 (defn ^:export sha2-512
   ([x] (sha2-512 x :hex))
@@ -77,10 +69,6 @@
        sha2/sha2-512
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-(defn ^:export sha2-512-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha2-512 args))
-
 (defn ^:export sha2-512-normalize
   "sha2-512 hash of provided string after normalizing string."
   ([s] (sha2-512-normalize s :hex))
@@ -88,10 +76,6 @@
    (-> s
        normalize-string
        (sha2-512 output-format :string))))
-
-(defn ^:export sha2-512-normalize-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha2-512-normalize args))
 
 (defn ^:export sha3-256
   ([x] (sha3-256 x :hex))
@@ -102,10 +86,6 @@
        sha3/sha3-256
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-(defn ^:export sha3-256-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha3-256 args))
-
 (defn ^:export sha3-256-normalize
   "sha3-256 hash of provided string after normalizing string."
   ([s] (sha3-256-normalize s :hex))
@@ -113,10 +93,6 @@
    (-> s
        normalize-string
        (sha3-256 output-format :string))))
-
-(defn ^:export sha3-256-normalize-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha3-256-normalize args))
 
 (defn ^:export sha3-512
   ([x] (sha3-512 x :hex))
@@ -127,10 +103,6 @@
        sha3/sha3-512
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-(defn ^:export sha3-512-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha3-512 args))
-
 (defn ^:export sha3-512-normalize
   "sha3-512 hash of provided string after normalizing string."
   ([s] (sha3-512-normalize s :hex))
@@ -138,10 +110,6 @@
    (-> s
        normalize-string
        (sha3-512 output-format :string))))
-
-(defn ^:export sha3-512-normalize-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply sha3-512-normalize args))
 
 (defn ^:export ripemd-160
   ([x] (ripemd-160 x :hex))
@@ -152,18 +120,10 @@
        ripemd/ripemd-160
        (alphabase/byte-array-to-base (keyword output-format)))))
 
-(defn ^:export ripemd-160-js
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply ripemd-160 args))
-
 (defn ^:export aes-encrypt
   ([x iv key] (aes-encrypt x iv key :hex))
   ([x iv key output-format]
    (aes/encrypt x key {:iv iv :output-format output-format})))
-
-(defn ^:export aesEncrypt
-  [& args]
-  (apply aes-encrypt args))
 
 (defn ^:export aes-decrypt
   ([x iv key] (aes-decrypt x iv key :string :hex))
@@ -171,19 +131,10 @@
   ([x iv key output-format input-format]
    (aes/decrypt x key {:iv iv :input-format input-format :output-format output-format})))
 
-(defn ^:export aesDecrypt
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply aes-decrypt args))
-
 (defn ^:export generate-key-pair
   ([] (secp256k1/generate-key-pair))
   ([private]
    (secp256k1/generate-key-pair private)))
-
-#?(:cljs
-   (defn ^:export generateKeyPair
-     [& args] ; multi-arity fns don't play well with TS types
-     (clj->js (apply generate-key-pair args))))
 
 (defn ^:export pub-key-from-private
   "Take a private key as either a hex string or BigInteger (clj) bignumber (cljs), returns as a hex string."
@@ -251,41 +202,6 @@
   public key. If invalid, returns nil."
   [jws]
   (jws/verify jws))
-
-#?(:cljs
-   (defn ^:export verifyJWS
-     [jws] (clj->js (jws/verify jws))))
-
-
-#?(:cljs
-   (def ^:export js-exports
-     #js {:normalizeString      normalize-string
-          :stringToByteArray    string->byte-array
-          :byteArrayToString    byte-array->string
-          :sha2_256             sha2-256-js
-          :sha2_256_normalize   sha2-256-normalize-js
-          :sha2_512             sha2-512-js
-          :sha2_512_normalize   sha2-512-normalize-js
-          :sha3_256             sha3-256-js
-          :sha3_256_normalize   sha3-256-normalize-js
-          :sha3_512             sha3-512-js
-          :sha3_512_normalize   sha3-512-normalize-js
-          :ripemd_160           ripemd-160-js
-          :aesEncrypt           aesEncrypt
-          :aesDecrypt           aesDecrypt
-          :generateKeyPair      generateKeyPair
-          :pubKeyFromPrivate    pub-key-from-private
-          :accountIdFromPublic  account-id-from-public
-          :accountIdFromPrivate account-id-from-private
-          :signMessage          sign-message
-          :verifySignature      verify-signature
-          :pubKeyFromMessage    pub-key-from-message
-          :accountIdFromMessage account-id-from-message
-          :scryptEncrypt        scrypt-encrypt
-          :scryptCheck          scrypt-check
-          :randomBytes          random-bytes
-          :createJWS            create-jws
-          :verifyJWS            verifyJWS}))
 
 (comment
 
@@ -380,6 +296,5 @@
   ;; CLJ  + CLJS
   ;; "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4"
 
-  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1)
+  (scrypt-check "hi" scrypt-hex mysalt 32768 8 1))
   ;; CLJ + CLJS
-  )
