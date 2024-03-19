@@ -1,5 +1,7 @@
 {:deps {:aliases [:dev]}
 
+ :dev-http {8000 "out/browser"}
+
  :builds
  {:node-test ; runs the cljs tests on node
   {:target           :node-test
@@ -21,4 +23,39 @@
    :output-to        "out/nodejs/fluree-crypto.js"
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
                       :optimizations :simple}
-   :exports-var      fluree.crypto/js-exports}}}
+   :exports-var      fluree.crypto/js-exports}
+
+  :browser
+  {:target           :esm
+   :output-dir       "out/browser/"
+   :compiler-options {:infer-externs true
+                      :externs       ["sjcl-externs.js"]}
+   :modules          {:fluree-crypto
+                      {:exports
+                       {normalizeString      fluree.crypto/normalize-string
+                        stringToByteArray    fluree.crypto/string->byte-array
+                        byteArrayToString    fluree.crypto/byte-array->string
+                        sha2_256             fluree.crypto/sha2-256
+                        sha2_256_normalize   fluree.crypto/sha2-256-normalize
+                        sha2_512             fluree.crypto/sha2-512
+                        sha2_512_normalize   fluree.crypto/sha2-512-normalize
+                        sha3_256             fluree.crypto/sha3-256
+                        sha3_256_normalize   fluree.crypto/sha3-256-normalize
+                        sha3_512             fluree.crypto/sha3-512
+                        sha3_512_normalize   fluree.crypto/sha3-512-normalize
+                        ripemd_160           fluree.crypto/ripemd-160
+                        aesEncrypt           fluree.crypto/aes-encrypt
+                        aesDecrypt           fluree.crypto/aes-decrypt
+                        generateKeyPair      fluree.crypto/generateKeyPair
+                        pubKeyFromPrivate    fluree.crypto/pub-key-from-private
+                        accountIdFromPublic  fluree.crypto/account-id-from-public
+                        accountIdFromPrivate fluree.crypto/account-id-from-private
+                        signMessage          fluree.crypto/sign-message
+                        verifySignature      fluree.crypto/verify-signature
+                        pubKeyFromMessage    fluree.crypto/pub-key-from-message
+                        accountIdFromMessage fluree.crypto/account-id-from-message
+                        scryptEncrypt        fluree.crypto/scrypt-encrypt
+                        scryptCheck          fluree.crypto/scrypt-check
+                        randomBytes          fluree.crypto/random-bytes
+                        createJWS            fluree.crypto/create-jws
+                        verifyJWS            fluree.crypto/verify-jws}}}}}}

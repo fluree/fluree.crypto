@@ -14,7 +14,8 @@
 (defn clean [_]
   (dorun
    (map #(b/delete {:path %})
-        #{"target" "dist" "node_modules" ".shadow-cljs" "out/nodejs"})))
+        #{"target" "dist" "node_modules" ".shadow-cljs" "out/nodejs"
+          "out/browser/fluree-crypto.js"})))
 
 (defn jar [_]
   (b/write-pom {:class-dir class-dir
@@ -57,6 +58,9 @@
 
 (defn node [_]
   (b/process {:command-args ["npx" "shadow-cljs" "release" "node"]}))
+
+(defn browser [_]
+  (b/process {:command-args ["npx" "shadow-cljs" "release" "browser"]}))
 
 (defn print-version [_]
   (println (pr-str {:version version})))

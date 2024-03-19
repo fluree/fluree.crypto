@@ -380,6 +380,13 @@ To test this in another Node project, run `npm install --save
 ../path/to/fluree.crypto`. That will point `@fluree/crypto` at this working
 directory.
 
+#### Browser
+
+Run `make browser` to build the browser library in `out/browser/fluree-crypto.js`.
+
+To test this you can run `npx shadow-cljs watch browser` and then open
+`http://localhost:8000/` in a web browser. You should see a byte array output
+on the web page.
 
 ### Installing
 
