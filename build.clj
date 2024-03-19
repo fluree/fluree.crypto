@@ -14,7 +14,7 @@
 (defn clean [_]
   (dorun
    (map #(b/delete {:path %})
-        #{"target" "out" "node_modules"})))
+        #{"target" "dist" "node_modules" ".shadow-cljs" "out/nodejs"})))
 
 (defn jar [_]
   (b/write-pom {:class-dir class-dir
@@ -54,6 +54,9 @@
   (dd/deploy {:installer :remote
               :artifact  jar-file
               :pom-file  (b/pom-path {:lib lib, :class-dir class-dir})}))
+
+(defn node [_]
+  (b/process {:command-args ["npx" "shadow-cljs" "release" "node"]}))
 
 (defn print-version [_]
   (println (pr-str {:version version})))
