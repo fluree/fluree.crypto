@@ -1,7 +1,7 @@
 {:deps {:aliases [:dev]}
 
  :builds
- {:node-test                            ; runs the cljs tests on node
+ {:node-test ; runs the cljs tests on node
   {:target           :node-test
    :output-to        "test/nodejs/node-tests.js"
    :autorun          true
