@@ -1,6 +1,6 @@
 {
   "name": "@fluree/crypto",
-  "version": "1.0.1",
+  "version": "3.0.0",
   "description": "Cryptography library for Fluree",
   "repository": {
     "type": "git",
