@@ -1,6 +1,5 @@
 (ns fluree.crypto-js
-  (:require [fluree.crypto :as fc]
-            [fluree.crypto.jws :as jws]))
+  (:require [fluree.crypto :as fc]))
 
 (defn ^:export sha2-256
   [& args] ; TS types don't work well with multi-arity fns
@@ -53,32 +52,3 @@
 (defn ^:export verify-jws
   [jws]
   (-> jws fc/verify-jws clj->js))
-
-(def ^:export exports
-  #js {:normalizeString      fc/normalize-string
-       :stringToByteArray    fc/string->byte-array
-       :byteArrayToString    fc/byte-array->string
-       :sha2_256             sha2-256
-       :sha2_256_normalize   sha2-256-normalize
-       :sha2_512             sha2-512
-       :sha2_512_normalize   sha2-512-normalize
-       :sha3_256             sha3-256
-       :sha3_256_normalize   sha3-256-normalize
-       :sha3_512             sha3-512
-       :sha3_512_normalize   sha3-512-normalize
-       :ripemd_160           ripemd-160
-       :aesEncrypt           aes-encrypt
-       :aesDecrypt           aes-decrypt
-       :generateKeyPair      generate-key-pair
-       :pubKeyFromPrivate    fc/pub-key-from-private
-       :accountIdFromPublic  fc/account-id-from-public
-       :accountIdFromPrivate fc/account-id-from-private
-       :signMessage          fc/sign-message
-       :verifySignature      fc/verify-signature
-       :pubKeyFromMessage    fc/pub-key-from-message
-       :accountIdFromMessage fc/account-id-from-message
-       :scryptEncrypt        fc/scrypt-encrypt
-       :scryptCheck          fc/scrypt-check
-       :randomBytes          fc/random-bytes
-       :createJWS            fc/create-jws
-       :verifyJWS            verify-jws})
