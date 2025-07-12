@@ -1,4 +1,4 @@
-FROM clojure:tools-deps-1.11.1.1435-bookworm-slim
+FROM clojure:temurin-17-tools-deps-bookworm-slim
 
 RUN mkdir -p /usr/src/fluree-crypto
 WORKDIR /usr/src/fluree-crypto
