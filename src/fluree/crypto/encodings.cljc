@@ -1,8 +1,6 @@
 (ns fluree.crypto.encodings
   (:require [clojure.string :as str]
-            #?@(:cljs [[fluree.crypto.asn1 :as asn1]
-                       ["@fluree/sjcl" :as sjcl]
-                       [fluree.crypto.bn :as bn]])
+            #?@(:cljs [[fluree.crypto.asn1 :as asn1]])
             [alphabase.core :as alphabase])
   #?(:clj
      (:import (org.bouncycastle.asn1 ASN1Integer
@@ -23,29 +21,31 @@
     hex))
 
 (defn biginteger->hex
-  "Hex-encode java.math.BigInteger (clj) or sjcl.bn (cljs)."
+  "Hex-encode java.math.BigInteger (clj) or BigInt (cljs)."
   [bn]
   #?(:clj  (-> ^BigInteger bn (.toString 16) pad-hex)
      :cljs (-> bn .toString (.replace #"^0x" "") pad-hex)))
 
 (defn biginteger->bytes
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
+  "Return bytes of java.math.BigInteger (clj) or BigInt (cljs)."
   ([bn] (biginteger->bytes bn nil))
   ([bn l]
    #?(:clj  (-> ^BigInteger bn .toByteArray)
-      :cljs (-> bn (.toBits l) sjcl/codec.bytes.fromBits))))
+      :cljs (let [hex-str (.toString bn 16)
+                  hex-str (if (odd? (count hex-str)) (str "0" hex-str) hex-str)]
+              (alphabase/hex->bytes hex-str)))))
 
 (defn bytes->biginteger
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
+  "Return bytes of java.math.BigInteger (clj) or BigInt (cljs)."
   [^bytes ba]
   #?(:clj  (BigInteger. ba)
-     :cljs (-> ba sjcl/codec.bytes.toBits (sjcl/bn.))))
+     :cljs (BigInt (str "0x" (alphabase/bytes->hex ba)))))
 
 (defn hex->biginteger
-  "Return bytes of java.math.BigInteger (clj) or sjcl.bn (cljs)."
+  "Return bytes of java.math.BigInteger (clj) or BigInt (cljs)."
   [^String hex]
   #?(:clj  (BigInteger. hex 16)
-     :cljs (.initWith (sjcl/bn.) hex)))
+     :cljs (BigInt (str "0x" hex))))
 
 (defn byte->int [the-bytes]
   (let [the-bytes (bytes the-bytes)]
@@ -54,13 +54,9 @@
 
 #?(:cljs
    (defn bn-even?
-     "Tests is an sjcl.bn (cljs) is even. Returns boolean if so."
-     [sjcl-bn]
-     (-> sjcl-bn
-         .-limbs ;; .limbs holds array of numbers
-         (get 0) ;; first array number is lowest bits
-         (bit-and 1)
-         (zero?))))
+     "Tests if a BigInt (cljs) is even. Returns boolean if so."
+     [big-int]
+     (= (mod big-int 2) 0)))
 
 
 ;; adapted from https://github.com/Sepia-Officinalis/secp256k1

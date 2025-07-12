@@ -21,8 +21,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@fluree/sjcl": "^1.0.8-3",
-    "js-sha3": "^0.9.3"
+    "@noble/curves": "^1.7.0",
+    "@noble/hashes": "^1.6.1"
   },
   "author": "Fluree, PBC",
   "license": "MIT"

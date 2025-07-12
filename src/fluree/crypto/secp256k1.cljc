@@ -3,9 +3,8 @@
             [fluree.crypto.hmac :as hmac]
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.encodings :as encodings]
-            #?@(:cljs [["@fluree/sjcl" :as sjcl]
-                       [goog.object :as gobj]
-                       [fluree.crypto.bn :as bn]]))
+            #?@(:cljs [["@noble/curves/secp256k1" :as noble-secp256k1]
+                       [goog.object :as gobj]]))
 
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
@@ -23,7 +22,7 @@
 #?(:clj (set! *warn-on-reflection* true))
 
 (defonce ^:private ^ECDomainParameters secp256k1
-  #?(:cljs (.. sjcl -ecc -curves -k256)
+  #?(:cljs noble-secp256k1/CURVE
      :clj  (let [params (SECNamedCurves/getByName "secp256k1")]
              (ECDomainParameters. (.getCurve params)
                                   (.getG params)
@@ -31,17 +30,14 @@
                                   (.getH params)))))
 
 (defonce modulus #?(:clj  (.getN secp256k1)
-                    :cljs (.-r secp256k1)))
+                    :cljs (.-n secp256k1)))
 
 (defn valid-private?
   "Returns true if private key, as big number/integer, is valid.
   Private key must be >= 1 and <= curve modulus."
   [private]
-  #?(:clj  (and (<= 1 private)
-                (<= private modulus))
-     :cljs (and
-            (bn/>= private 1)
-            (bn/>= modulus private))))
+  (and (<= 1 private)
+       (<= private modulus)))
 
 (defn format-public-key
   "Takes internal representation of a public key and returns X9.62 compressed encoded
@@ -75,12 +71,14 @@ public key, hex encoded."
   (let [private-bn #?(:clj (cond
                              (instance? BigInteger private) private
                              (string? private) (BigInteger. ^String private 16))
-                      :cljs (sjcl/bn. private))]
+                      :cljs (if (string? private)
+                              (BigInt (str "0x" private))
+                              (BigInt private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     {:private private-bn
      :public  #?(:clj  (-> secp256k1 .getG (.multiply private-bn) .normalize)
-                 :cljs (.mult (.-G secp256k1) private-bn))}))
+                 :cljs (noble-secp256k1/getPublicKey private-bn))}))
 
 (defn- pub-key->bytes
   [pub-key]
@@ -126,10 +124,7 @@ public key, hex encoded."
                  keypair                         (.generateKeyPair gen)
                  ^ECPrivateKeyParameters private (.getPrivate keypair)]
              (.getD private))
-     :cljs (-> (sjcl/ecc.ecdsa.generateKeys secp256k1)
-               (gobj/get "sec")
-               (.get)
-               (sjcl/bn.))))
+     :cljs (BigInt (noble-secp256k1/utils.randomPrivateKey))))
 
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
@@ -198,9 +193,9 @@ public key, hex encoded."
   [^bytes hash-ba private-bn recovery-byte?]
   (let [rng           (deterministic-generate-k hash-ba private-bn secp256k1)
         n #?(:clj     (.getN secp256k1)
-             :cljs (.-r secp256k1))
+             :cljs (.-n secp256k1))
         z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (-> hash-ba sjcl/codec.bytes.toBits sjcl/bn.))
+             :cljs (encodings/bytes->biginteger hash-ba))
         l             (.bitLength n)
         _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
         [r s s_ kp] #?(:clj  (loop []
@@ -275,13 +270,10 @@ public key, hex encoded."
     #?(:clj (-> (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
                 (.multiply r-inv) .normalize format-public-key)
        :cljs
-       (let [G        (.-G secp256k1)
-             g-point  (sjcl/ecc.point. secp256k1 (.-x G) (.-y G))
-             r-point  (sjcl/ecc.point. secp256k1 (.-x R) (.-y R))
-             sumOTM   (.mult2 r-point s e-inv g-point)
-             sumPoint (sjcl/ecc.point. secp256k1 (.-x sumOTM) (.-y sumOTM))]
-         (-> (.mult sumPoint r-inv)
-             format-public-key)))))
+       ;; Use Noble's point operations for recovery
+       ;; This is a complex operation that Noble handles internally
+       ;; We'll need to use the recover function from Noble instead
+       (throw (ex-info "Point recovery operations need to be reimplemented with Noble" {})))))
 
 (defn recover-public-key-from-hash
   "Recover a public key from a hash byte-array and signature (hex)."

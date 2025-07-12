@@ -1,6 +1,7 @@
 (ns fluree.crypto.hmac
   #?(:cljs
-     (:require ["@fluree/sjcl" :as sjcl]))
+     (:require ["@noble/hashes/hmac" :as noble-hmac]
+               ["@noble/hashes/sha256" :as noble-sha256]))
   #?(:clj
      (:import (org.bouncycastle.crypto.macs HMac)
               (org.bouncycastle.crypto.params KeyParameter)
@@ -18,8 +19,4 @@
              (.update hmac message 0 (alength message))
              (.doFinal hmac result 0)
              result)
-     :cljs (let [hmac         (sjcl/misc.hmac. (sjcl/codec.bytes.toBits key))
-                 message-bits (sjcl/codec.bytes.toBits message)]
-             (-> hmac
-                 (.encrypt message-bits)
-                 (sjcl/codec.bytes.fromBits)))))
+     :cljs (noble-hmac/hmac noble-sha256/sha256 key message)))
