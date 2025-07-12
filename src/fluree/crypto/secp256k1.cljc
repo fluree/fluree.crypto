@@ -1,6 +1,5 @@
 (ns fluree.crypto.secp256k1
   (:require [alphabase.core :as alphabase]
-            [fluree.crypto.hmac :as hmac]
             [fluree.crypto.sha2 :as sha2]
             [fluree.crypto.encodings :as encodings]
             #?@(:cljs [["@noble/curves/secp256k1" :as noble-secp256k1]
@@ -72,8 +71,8 @@ public key, hex encoded."
                              (instance? BigInteger private) private
                              (string? private) (BigInteger. ^String private 16))
                       :cljs (if (string? private)
-                              (BigInt (str "0x" private))
-                              (BigInt private)))]
+                              (js/BigInt (str "0x" private))
+                              (js/BigInt private)))]
     (when-not (valid-private? private-bn)
       (throw (ex-info "Invalid private key. Must be big integer and >= 1, <= curve modulus." {:private private})))
     {:private private-bn
@@ -124,7 +123,7 @@ public key, hex encoded."
                  keypair                         (.generateKeyPair gen)
                  ^ECPrivateKeyParameters private (.getPrivate keypair)]
              (.getD private))
-     :cljs (BigInt (noble-secp256k1/utils.randomPrivateKey))))
+     :cljs (js/BigInt (noble-secp256k1/utils.randomPrivateKey))))
 
 (defn generate-key-pair*
   "Generates an internal representation of key pair from a secure random seed or provided private key.
@@ -142,145 +141,58 @@ public key, hex encoded."
   ([] (format-key-pair (generate-key-pair*)))
   ([private] (format-key-pair (generate-key-pair* private))))
 
-;; adapted from https://github.com/Sepia-Officinalis/secp256k1
-(defn deterministic-generate-k
-  "Deterministically generate a random number in accordance with RFC 6979.
-  Provided hash should have 256 bits to align with secp256k1 curve."
-  ^HMacDSAKCalculator
-  [hash-ba priv-key ^ECDomainParameters curve]
-  #?(:clj  (do (assert (= (count hash-ba)
-                          (-> curve .getN .bitLength (/ 8)))
-                       "Hash should have the same number of bytes as the curve")
-               (doto (HMacDSAKCalculator. (SHA256Digest.))
-                 (.init (.getN curve) priv-key hash-ba)))
-     :cljs (let [l            (-> curve .-r .bitLength)
-                 curve-bytes  (/ l 8)
-                 v            (repeat curve-bytes 0x01)
-                 k            (repeat curve-bytes 0x00)
-                 pk           (encodings/biginteger->bytes priv-key)
-                 left-padding (repeat (- curve-bytes (count hash-ba)) 0)
-                 hash         (concat left-padding hash-ba)
-                 k            (hmac/hmac-sha256 (concat v [0] pk hash) k)
-                 v            (hmac/hmac-sha256 v k)
-                 k            (hmac/hmac-sha256 (concat v [1] pk hash) k)
-                 v            (hmac/hmac-sha256 v k)]
-             (assert (= (count hash) curve-bytes)
-                     "Hash should have the same number of bytes as the curve modulus")
-             (-> (hmac/hmac-sha256 v k)
-                 encodings/bytes->biginteger))))
-
-(defn- compute-recovery-byte
-  "Compute a recovery byte for a compressed ECDSA signature given R and S parameters.
-  Returns value as byte integer."
-  [^ECPoint kp r s]
-  #?(:clj  (let [n      (.getN secp256k1)
-                 big-r? (>= r n)
-                 big-s? (>= (+ s s) n)
-                 y-odd? (-> kp .getYCoord .toBigInteger (.testBit 0))]
-             (-> 0x1B
-                 (+ (if (not= big-s? y-odd?) 1 0))
-                 (+ (if big-r? 2 0))))
-
-     :cljs (let [n      (.-r secp256k1)
-                 big-r? (bn/>= r n)
-                 big-s? (bn/>= (.add s s) n)
-                 y-odd? (-> kp .-y encodings/bn-even? not)]
-             (-> 0x1B
-                 (+ (if (not= big-s? y-odd?) 1 0))
-                 (+ (if big-r? 2 0))))))
-
-(defn ^:export sign-hash
-  [^bytes hash-ba private-bn recovery-byte?]
-  (let [rng           (deterministic-generate-k hash-ba private-bn secp256k1)
-        n #?(:clj     (.getN secp256k1)
-             :cljs (.-n secp256k1))
-        z #?(:clj     (BigInteger. 1 hash-ba)
-             :cljs (encodings/bytes->biginteger hash-ba))
-        l             (.bitLength n)
-        _             (assert (= (count hash-ba) (/ l 8)) "Hash should have the same number of bytes as the curve modulus")
-        [r s s_ kp] #?(:clj  (loop []
-                               (let [k           (.nextK rng)
-                                     ^ECPoint kp (-> secp256k1 .getG (.multiply k) .normalize)
-                                     r           (-> kp .getXCoord .toBigInteger (.mod n))
-                                     s_          (-> k
-                                                     (.modInverse n)
-                                                     (.multiply (-> r
-                                                                    (.multiply private-bn)
-                                                                    (.add z)))
-                                                     (.mod n))
-                                     s           (if (< (+ s_ s_) n) s_ (.subtract n s_))]
-                                 (if (or (zero? r) (zero? s))
-                                   (recur)
-                                   [r s s_ kp])))
-                       :cljs (let [k     rng
-                                   kp    (-> secp256k1 .-G (.mult k))
-                                   r     (-> kp .-x (.mod n))
-                                   s_    (-> (.mul r private-bn) (.add z) (.mul (.inverseMod k n)) (.mod n))
-                                   s_+s_ (.add s_ s_)
-                                   ge?   (bn/>= s_+s_ n)
-                                   s     (if ge? (.sub n s_) s_)]
-                               [r s s_ kp]))
-        recovery-byte (when recovery-byte? (compute-recovery-byte kp r s_))]
-    (let [der-sig (encodings/DER-encode-ECDSA-signature r s recovery-byte secp256k1)]
-      ; TODO: The DER fn converts hex to bytes and then we convert bytes back to hex here.
-      ;       Can we optimize that a bit?
-      (alphabase/bytes->hex der-sig))))
-
 (defn ^:export sign
   "Sign some message with provided private key.
   Message must be a byte-array or string.
-  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs)."
+  Private key must be hex-encoded or a BigInteger(clj)/bignumber(cljs).
+  Returns 65-byte signature: r(32) + s(32) + recovery_id(1)"
   [message private-key]
   (let [msg-ba     (if (string? message)
                      (alphabase/string->bytes message)
                      message)
-        private-bn (if (string? private-key)
-                     (encodings/hex->biginteger private-key)
-                     private-key)
         hash       (sha2/sha2-256 msg-ba)]
-    (sign-hash hash private-bn true)))
-
-(defn ecrecover
-  "Given the components of a signature and a recovery value,
-  recover and return the public key that generated the
-  signature according to the algorithm in SEC1v2 section 4.1.6
-
-  recovery-byte should be an integer byte."
-  [^bytes hash recovery-byte ^BigInteger r ^BigInteger s]
-  (assert (and (number? recovery-byte)
-               (<= 0x1B recovery-byte)
-               (<= recovery-byte 0x1E))
-          (str "Recovery byte should be between 0x1B and 0x1E. Provided: "
-               #?(:cljs (.toString recovery-byte 16) :clj (format "%x" recovery-byte))))
-  (let [l #?(:clj             (-> secp256k1 .getN .bitLength (/ 8))
-             :cljs (-> secp256k1 .-r .bitLength (/ 8)))
-        _                     (assert (= l (count hash))
-                                      (str "Hash should have " l " bytes, but had " (count hash) "."))
-        y-even?               (even? (- recovery-byte 0x1B))
-        is-second-key?        (odd? (-> recovery-byte
-                                        (- 0x1B)
-                                        (bit-shift-right 1)))
-        n #?(:clj             (.getN secp256k1) :cljs (.-r secp256k1))
-        point                 (encodings/compute-point y-even? (if is-second-key? (.add r n) r) secp256k1)
-        R #?(:cljs point :clj (encodings/x962-decode point secp256k1))
-        r-inv #?(:clj         (.modInverse r n) :cljs (.inverseMod r n))
-        hash-bi #?(:clj       (BigInteger. 1 hash) :cljs (encodings/bytes->biginteger hash))
-        e-inv #?(:clj         (.subtract n hash-bi)
-                 :cljs (.sub n hash-bi))]
-    #?(:clj (-> (ECAlgorithms/sumOfTwoMultiplies (.getG secp256k1) e-inv R s)
-                (.multiply r-inv) .normalize format-public-key)
-       :cljs
-       ;; Use Noble's point operations for recovery
-       ;; This is a complex operation that Noble handles internally
-       ;; We'll need to use the recover function from Noble instead
-       (throw (ex-info "Point recovery operations need to be reimplemented with Noble" {})))))
+    #?(:clj  (throw (ex-info "Clojure implementation needs to be updated for 65-byte format" {}))
+       :cljs (let [private-hex (if (string? private-key)
+                                 private-key
+                                 (.toString private-key 16))
+                   signature   (noble-secp256k1/sign hash private-hex)
+                   ;; Convert Noble signature to 65-byte format
+                   r-hex       (-> signature .-r (.toString 16) (encodings/pad-to-length 64))
+                   s-hex       (-> signature .-s (.toString 16) (encodings/pad-to-length 64))
+                   ;; Calculate recovery ID by testing which one recovers correctly
+                   public-key  (noble-secp256k1/getPublicKey private-hex)
+                   recovery-id (loop [id 0]
+                                 (if (> id 3)
+                                   0  ;; fallback
+                                   (let [compact-sig (str r-hex s-hex)
+                                         test-sig    (-> noble-secp256k1/Signature
+                                                      (.fromCompact compact-sig)
+                                                      (.addRecoveryBit id))
+                                         recovered   (.recoverPublicKey test-sig hash)]
+                                     (if (= (alphabase/bytes->hex public-key)
+                                           (alphabase/bytes->hex (.toRawBytes recovered)))
+                                       id
+                                       (recur (inc id))))))]
+               ;; Return 65-byte hex: r(32) + s(32) + recovery_id(1)
+               (str r-hex s-hex (-> recovery-id (.toString 16) (encodings/pad-to-length 2)))))))
 
 (defn recover-public-key-from-hash
-  "Recover a public key from a hash byte-array and signature (hex)."
-  [hash signature]
-  (let [{:keys [recover R S]} (encodings/DER-decode-ECDSA-signature signature)
-        recover (int recover)]
-    (ecrecover hash recover R S)))
+  "Recover a public key from a hash byte-array and 65-byte signature (hex).
+  Signature format: r(32) + s(32) + recovery_id(1)"
+  [hash signature-hex]
+  (let [signature-bytes (alphabase/hex->bytes signature-hex)
+        _               (assert (= 65 (count signature-bytes))
+                                (str "Signature should be 65 bytes, got " (count signature-bytes)))
+        r-hex           (alphabase/bytes->hex (take 32 signature-bytes))
+        s-hex           (alphabase/bytes->hex (take 32 (drop 32 signature-bytes)))
+        recovery-id     (nth signature-bytes 64)]
+    #?(:clj  (throw (ex-info "Clojure recovery implementation needs to be updated" {}))
+       :cljs (let [compact-sig     (str r-hex s-hex)
+                   signature       (.fromCompact noble-secp256k1/Signature compact-sig)
+                   sig-with-recovery (.addRecoveryBit signature recovery-id)
+                   recovered-point (.recoverPublicKey sig-with-recovery hash)]
+               ;; Convert to compressed hex format
+               (-> recovered-point .toHex)))))
 
 (defn recover-public-key
   "Recover a public key from original message and signature (hex) of the
@@ -292,25 +204,21 @@ public key, hex encoded."
     (recover-public-key-from-hash hash signature)))
 
 (defn verify-signature-from-hash
+  "Verify signature by recovering public key and comparing.
+  Expects 65-byte signature format."
   [key hash signature]
-  (let [head1 (subs signature 0 2)
-        head2 (subs signature 2 4)]
-    (cond (and (#{"1b" "1c" "1d" "1e"} head1) (= "30" head2))
-          (= key
-             (recover-public-key-from-hash hash signature))
-
-          ;(= head1 0x30)
-          ;(verify-ECDSA-signature-from-hash pub-key input sig-bytes)
-
-          :else
-          (throw (ex-info "Unknown signature header"
-                          {:key       key
-                           :hash      hash
-                           :signature signature})))))
+  (try
+    (= key (recover-public-key-from-hash hash signature))
+    (catch #?(:clj Exception :cljs js/Error) e
+      (throw (ex-info "Signature verification failed"
+                      {:key       key
+                       :hash      hash
+                       :signature signature
+                       :error     (str e)})))))
 
 (defn ^:export verify
   "Verifies a message given a signature (in hex).
-  Assumes signature is DER-encoded with a recovery byte."
+  Expects 65-byte signature format: r(32) + s(32) + recovery_id(1)"
   [pub-key message signature]
   (let [hash (sha2/sha2-256 (alphabase/string->bytes message))]
     (verify-signature-from-hash pub-key hash signature)))

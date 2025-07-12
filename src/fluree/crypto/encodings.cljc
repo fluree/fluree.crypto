@@ -39,13 +39,13 @@
   "Return bytes of java.math.BigInteger (clj) or BigInt (cljs)."
   [^bytes ba]
   #?(:clj  (BigInteger. ba)
-     :cljs (BigInt (str "0x" (alphabase/bytes->hex ba)))))
+     :cljs (js/BigInt (str "0x" (alphabase/bytes->hex ba)))))
 
 (defn hex->biginteger
   "Return bytes of java.math.BigInteger (clj) or BigInt (cljs)."
   [^String hex]
   #?(:clj  (BigInteger. hex 16)
-     :cljs (BigInt (str "0x" hex))))
+     :cljs (js/BigInt (str "0x" hex))))
 
 (defn byte->int [the-bytes]
   (let [the-bytes (bytes the-bytes)]
@@ -67,7 +67,7 @@
      [n modulus]
      (let [n    (.mod n modulus)
            mod8 (-> modulus (.mod 8) .toString js/parseInt)]
-       (assert (bn/>= modulus 0), "Modulus must be non-negative")
+       (assert (>= modulus 0), "Modulus must be non-negative")
        (cond
          (.equals n 0) n
 
@@ -96,9 +96,9 @@
                         (iterate #(.halveM %))
                         (take-while even?)
                         count)
-               two (sjcl/bn. 2)
+               two (js/BigInt 2)
                z   (->> (range) rest rest
-                        (map #(sjcl/bn. %))
+                        (map #(js/BigInt %))
                         (map #(.powermod % q modulus))
                         (filter
                           #(not
@@ -173,8 +173,8 @@
            y           (if (= y-even? (bn-even? y-candidate))
                          y-candidate
                          (.sub modulus y-candidate))]
-       #js {:x (sjcl/bn. x-coordinate)
-            :y (sjcl/bn. y)})))
+       #js {:x x-coordinate
+            :y y})))
 
 ;; X92.61 encode / decode
 
@@ -203,8 +203,8 @@
         y    (subs encoded-key (+ 2 size))]
 
     #?(:clj  (-> curve .getCurve (.createPoint x y) .normalize)
-       :cljs #js {:x (.initWith (sjcl/bn.) x)
-                  :y (.initWith (sjcl/bn.) y)})))
+       :cljs #js {:x (js/BigInt (str "0x" x))
+                  :y (js/BigInt (str "0x" y))})))
 
 
 (defn x962-decode
@@ -237,8 +237,7 @@
      (str "04" (pad-hex x-coord) (pad-hex y-coord))
      (let [y-even? #?(:clj (let [y-bi (BigInteger. y-coord 16)]
                              (even? y-bi))
-                      :cljs (-> (sjcl/bn.)
-                                (.initWith y-coord)
+                      :cljs (-> (js/BigInt (str "0x" y-coord))
                                 (bn-even?)))]
        (if y-even?
          (str "02" (pad-to-length (pad-hex x-coord) 64))
@@ -307,9 +306,8 @@
   Both R and S should be bigintegers (clj) /bignumbers (cljs).
   recover should also be biginteger"
   [^BigInteger R ^BigInteger S recover curve]
-  #?(:cljs (let [l           (-> curve .-r .bitLength)
-                 R-hex       (-> R (.toBits l) sjcl/codec.hex.fromBits)
-                 S-hex       (-> S (.toBits l) sjcl/codec.hex.fromBits)
+  #?(:cljs (let [R-hex       (.toString R 16)
+                 S-hex       (.toString S 16)  
                  recover-hex (.toString recover 16)
                  R-asn1      (asn1/encode-asn1-unsigned-integer-hex R-hex)
                  S-asn1      (asn1/encode-asn1-unsigned-integer-hex S-hex)]

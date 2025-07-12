@@ -1,8 +1,6 @@
 (ns fluree.crypto.scrypt
   (:require
-    [alphabase.core :as alphabase]
-    #?@(:cljs [["@fluree/sjcl" :as sjcl]
-               [goog.object]]))
+    [alphabase.core :as alphabase])
   #?(:clj
      (:import (com.lambdaworks.crypto SCryptUtil)
               (com.lambdaworks.crypto SCrypt)
@@ -20,13 +18,12 @@
        :cljs (js/window.crypto.getRandomValues seed))
     seed))
 
+;; DEPRECATED: Scrypt encryption functions are no longer used
+;; Use random-bytes for secure random number generation instead
 
 (defn encrypt
-  "Encrypts message (bytes) using salt (bytes).
-  Returns encrypted message in bytes directly.
-
-  Note verification of message will require the identical salt, n, r, p used
-  by the original encryption."
+  "DEPRECATED: Scrypt encryption is no longer supported in ClojureScript.
+  This function is kept for compatibility but will throw an error in ClojureScript."
   ([raw]
    (encrypt raw (random-bytes 16)))
   ([raw salt]
@@ -37,31 +34,21 @@
    (encrypt raw salt n r p 32))
   ([raw salt n r p dk-len]
    #?(:clj  (SCrypt/scrypt raw salt n r p dk-len)
-      :cljs (let [rawBits  (sjcl/codec.bytes.toBits raw)
-                  saltBits (sjcl/codec.bytes.toBits salt)
-                  length (* 8 dk-len)
-                  res (sjcl/crypt.scrypt. rawBits saltBits n r p length)]
-              (sjcl/codec.bytes.fromBits res)))))
-
+      :cljs (throw (ex-info "Scrypt encryption is no longer supported in ClojureScript. Use other crypto functions." {})))))
 
 (defn check
-  "Compare raw message (bytes) with previously encrypted (bytes) that was
-  encrypted with the provided salt, n, r and p.
-  Returns true or false."
+  "DEPRECATED: Scrypt check is no longer supported in ClojureScript.
+  This function is kept for compatibility but will throw an error in ClojureScript."
   ([raw encrypted salt]
    (check raw encrypted salt 32768 8 1))
   ([raw encrypted salt n r p]
-   (let [dk-len #?(:clj (count encrypted)
-                   :cljs (.-length encrypted))
-         is-valid?      (fn [encrypted test]
-                          #?(:clj  (= (seq encrypted) (seq test))
-                             :cljs (.equals goog.object encrypted test)))
-         to-test        (encrypt raw salt n r p dk-len)]
-     (is-valid? encrypted to-test))))
-
+   #?(:clj  (let [dk-len      (count encrypted)
+                  is-valid?   (fn [encrypted test] (= (seq encrypted) (seq test)))
+                  to-test     (encrypt raw salt n r p dk-len)]
+              (is-valid? encrypted to-test))
+      :cljs (throw (ex-info "Scrypt check is no longer supported in ClojureScript. Use other crypto functions." {})))))
 
 (comment
-
 
   (in-ns 'fluree.crypto.scrypt)
 
