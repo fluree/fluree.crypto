@@ -89,10 +89,17 @@
       (is (= 35
              (count (crypto/account-id-from-private private)))))))
 
-(deftest ripemd-160-test
-  (testing "RIPEMD-160 Hash"
-    (is (= "ad6ce46f7f1ea8519dc02ce8ce0c278c6ff329b2"
-           (crypto/ripemd-160 "hi there!")))))
+(deftest account-id-deterministic-test
+  (testing "Account ID generation is deterministic with SHA-256 truncation"
+    ;; Test with a known public key to ensure deterministic results
+    (let [public-key "035813c81e39b231b586f48e98bcfe6c0a71bdb17e2fa907463339ab1a9fb5e4a5"
+          account-id (crypto/account-id-from-public public-key)]
+      ;; Account ID should be deterministic for the same public key
+      (is (= account-id (crypto/account-id-from-public public-key)))
+      ;; Should be base58 encoded and 35 characters (as existing tests check)
+      (is (= 35 (count account-id)))
+      ;; Should be different from the original public key
+      (is (not= public-key account-id)))))
 
 (comment
 

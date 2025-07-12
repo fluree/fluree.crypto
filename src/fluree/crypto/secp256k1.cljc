@@ -2,12 +2,10 @@
   (:require [alphabase.core :as alphabase]
             [fluree.crypto.hmac :as hmac]
             [fluree.crypto.sha2 :as sha2]
-            [fluree.crypto.ripemd :as ripemd]
             [fluree.crypto.encodings :as encodings]
             #?@(:cljs [["@fluree/sjcl" :as sjcl]
                        [goog.object :as gobj]
-                       [fluree.crypto.bn :as bn]])
-            [fluree.crypto.ripemd :as ripemd])
+                       [fluree.crypto.bn :as bn]]))
 
   #?(:clj
      (:import (java.io ByteArrayOutputStream)
@@ -98,22 +96,24 @@ public key, hex encoded."
      :cljs (clj->js bytes)))
 
 (defn get-sin-from-public-key
-  "Generate a SIN from a public key"
+  "Generate a SIN from a public key using SHA-256 truncation (Cosmos-style)"
   [pub-key & {:keys [output-format]
               :or   {output-format :base58}}]
-  (let [pub-prefixed (-> pub-key
+  (let [pub-hash     (-> pub-key
                          pub-key->bytes
-                         sha2/sha2-256
-                         ripemd/ripemd-160
-                         ;;; What is this 15 and 2? Version?
-                         (->> (concat [0x0F 0x02]))
-                         ->byte-array)
-        checksum     (-> pub-prefixed
-                         sha2/sha2-256
-                         sha2/sha2-256
-                         (->> (take 4)))
-        bytes        (concat pub-prefixed checksum)
-        ba           (->byte-array bytes)]
+                         sha2/sha2-256)
+        ;; Take first 20 bytes of SHA-256 hash (like Cosmos/Tendermint)
+        address-bytes (take 20 pub-hash)
+        ;; Add version prefix
+        pub-prefixed  (-> address-bytes
+                          (->> (concat [0x0F 0x02]))
+                          ->byte-array)
+        checksum      (-> pub-prefixed
+                          sha2/sha2-256
+                          sha2/sha2-256
+                          (->> (take 4)))
+        bytes         (concat pub-prefixed checksum)
+        ba            (->byte-array bytes)]
     (alphabase/byte-array-to-base ba output-format)))
 
 (defn ^:export new-private-key

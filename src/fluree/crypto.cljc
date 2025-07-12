@@ -3,11 +3,9 @@
    [alphabase.core :as alphabase]
    [fluree.crypto.aes :as aes]
    [fluree.crypto.jws :as jws]
-   [fluree.crypto.ripemd :as ripemd]
    [fluree.crypto.scrypt :as scrypt]
    [fluree.crypto.secp256k1 :as secp256k1]
    [fluree.crypto.sha2 :as sha2]
-   [fluree.crypto.sha3 :as sha3]
    #?@(:cljs [[goog.crypt :as gcrypt]
               [goog.object :as gobj]]))
   #?(:clj
@@ -77,48 +75,6 @@
        normalize-string
        (sha2-512 output-format :string))))
 
-(defn ^:export sha3-256
-  ([x] (sha3-256 x :hex))
-  ([x output-format] (sha3-256 x output-format (coerce-input-format x)))
-  ([x output-format input-format]
-   (-> x
-       (alphabase/base-to-byte-array input-format)
-       sha3/sha3-256
-       (alphabase/byte-array-to-base (keyword output-format)))))
-
-(defn ^:export sha3-256-normalize
-  "sha3-256 hash of provided string after normalizing string."
-  ([s] (sha3-256-normalize s :hex))
-  ([s output-format]
-   (-> s
-       normalize-string
-       (sha3-256 output-format :string))))
-
-(defn ^:export sha3-512
-  ([x] (sha3-512 x :hex))
-  ([x output-format] (sha3-512 x output-format (coerce-input-format x)))
-  ([x output-format input-format]
-   (-> x
-       (alphabase/base-to-byte-array input-format)
-       sha3/sha3-512
-       (alphabase/byte-array-to-base (keyword output-format)))))
-
-(defn ^:export sha3-512-normalize
-  "sha3-512 hash of provided string after normalizing string."
-  ([s] (sha3-512-normalize s :hex))
-  ([s output-format]
-   (-> s
-       normalize-string
-       (sha3-512 output-format :string))))
-
-(defn ^:export ripemd-160
-  ([x] (ripemd-160 x :hex))
-  ([x output-format] (ripemd-160 x output-format (coerce-input-format x)))
-  ([x output-format input-format]
-   (-> x
-       (alphabase/base-to-byte-array input-format)
-       ripemd/ripemd-160
-       (alphabase/byte-array-to-base (keyword output-format)))))
 
 (defn ^:export aes-encrypt
   ([x iv key] (aes-encrypt x iv key :hex))

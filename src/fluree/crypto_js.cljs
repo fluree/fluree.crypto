@@ -18,25 +18,6 @@
   [& args] ; TS types don't work well with multi-arity fns
   (apply fc/sha2-512-normalize args))
 
-(defn ^:export sha3-256
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-256 args))
-
-(defn ^:export sha3-256-normalize
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-256-normalize args))
-
-(defn ^:export sha3-512
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-512 args))
-
-(defn ^:export sha3-512-normalize
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-512-normalize args))
-
-(defn ^:export ripemd-160
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/ripemd-160 args))
 
 (defn ^:export aes-encrypt
   [& args]
@@ -62,11 +43,6 @@
        :sha2_256_normalize   sha2-256-normalize
        :sha2_512             sha2-512
        :sha2_512_normalize   sha2-512-normalize
-       :sha3_256             sha3-256
-       :sha3_256_normalize   sha3-256-normalize
-       :sha3_512             sha3-512
-       :sha3_512_normalize   sha3-512-normalize
-       :ripemd_160           ripemd-160
        :aesEncrypt           aes-encrypt
        :aesDecrypt           aes-decrypt
        :generateKeyPair      generate-key-pair
