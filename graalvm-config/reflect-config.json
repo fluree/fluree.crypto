@@ -1,0 +1,85 @@
+[
+  {
+    "name": "java.security.interfaces.EdECPrivateKey",
+    "methods": [
+      {"name": "getBytes", "parameterTypes": []},
+      {"name": "getEncoded", "parameterTypes": []},
+      {"name": "getAlgorithm", "parameterTypes": []},
+      {"name": "getFormat", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.interfaces.EdECPublicKey",
+    "methods": [
+      {"name": "getEncoded", "parameterTypes": []},
+      {"name": "getAlgorithm", "parameterTypes": []},
+      {"name": "getFormat", "parameterTypes": []},
+      {"name": "getPoint", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.spec.EdECPrivateKeySpec",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "methods": [
+      {"name": "getBytes", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.spec.EdECPublicKeySpec",
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "methods": [
+      {"name": "getPoint", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.spec.NamedParameterSpec",
+    "fields": [
+      {"name": "ED25519", "allowWrite": false}
+    ],
+    "methods": [
+      {"name": "getName", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.spec.EdECPoint",
+    "methods": [
+      {"name": "getY", "parameterTypes": []},
+      {"name": "isXOdd", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.KeyPairGenerator",
+    "methods": [
+      {"name": "getInstance", "parameterTypes": ["java.lang.String"]},
+      {"name": "initialize", "parameterTypes": ["java.security.spec.AlgorithmParameterSpec", "java.security.SecureRandom"]},
+      {"name": "generateKeyPair", "parameterTypes": []}
+    ]
+  },
+  {
+    "name": "java.security.KeyFactory",
+    "methods": [
+      {"name": "getInstance", "parameterTypes": ["java.lang.String"]},
+      {"name": "generatePrivate", "parameterTypes": ["java.security.spec.KeySpec"]},
+      {"name": "generatePublic", "parameterTypes": ["java.security.spec.KeySpec"]}
+    ]
+  },
+  {
+    "name": "java.security.Signature",
+    "methods": [
+      {"name": "getInstance", "parameterTypes": ["java.lang.String"]},
+      {"name": "initSign", "parameterTypes": ["java.security.PrivateKey"]},
+      {"name": "initVerify", "parameterTypes": ["java.security.PublicKey"]},
+      {"name": "update", "parameterTypes": ["[B"]},
+      {"name": "sign", "parameterTypes": []},
+      {"name": "verify", "parameterTypes": ["[B"]}
+    ]
+  },
+  {
+    "name": "sun.security.ec.ed.EdDSAOperations"
+  },
+  {
+    "name": "sun.security.ec.ed.EdDSAParameters"
+  }
+]

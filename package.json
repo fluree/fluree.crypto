@@ -1,6 +1,6 @@
 {
   "name": "@fluree/crypto",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Cryptography library for Fluree",
   "repository": {
     "type": "git",
@@ -17,12 +17,12 @@
     "karma": "^6.3.4",
     "karma-chrome-launcher": "^3.1.1",
     "karma-cljs-test": "^0.1.0",
-    "shadow-cljs": "^2.27.4",
+    "shadow-cljs": "^2.28.15",
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@noble/curves": "^1.7.0",
-    "@noble/hashes": "^1.6.1"
+    "@noble/ed25519": "^2.3.0",
+    "@noble/hashes": "^1.8.0"
   },
   "author": "Fluree, PBC",
   "license": "MIT"

@@ -1,0 +1,16 @@
+{
+  "resources": {
+    "includes": [
+      {
+        "pattern": "clojure/.*\\.clj$"
+      },
+      {
+        "pattern": "fluree/.*\\.cljc?$"
+      },
+      {
+        "pattern": "com/fluree/.*"
+      }
+    ]
+  },
+  "bundles": []
+}

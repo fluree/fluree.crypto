@@ -4,8 +4,7 @@
             #?@(:cljs [[goog.crypt.Aes]
                        [goog.crypt.Cbc]
                        [fluree.crypto.pkcs7 :as pkcs7]]))
-  #?(:clj (:import (java.security SecureRandom)
-                   (javax.crypto KeyGenerator Cipher)
+  #?(:clj (:import (javax.crypto Cipher)
                    (javax.crypto.spec SecretKeySpec IvParameterSpec))))
 
 #?(:clj (set! *warn-on-reflection* true))
