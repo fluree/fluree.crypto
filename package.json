@@ -9,7 +9,15 @@
   "files": [
     "dist"
   ],
-  "exports": "./dist/nodejs/fluree-crypto.js",
+  "exports": {
+    ".": {
+      "import": "./dist/fluree-crypto.js",
+      "require": "./dist/nodejs-cjs/fluree-crypto.cjs",
+      "browser": "./dist/fluree-crypto.js"
+    }
+  },
+  "main": "./dist/nodejs-cjs/fluree-crypto.cjs",
+  "module": "./dist/fluree-crypto.js",
   "browser": "dist/browser/fluree-crypto.js",
   "types": "dist/fluree-crypto.d.ts",
   "devDependencies": {
