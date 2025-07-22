@@ -17,3 +17,4 @@ pom.xml
 .shadow-cljs
 .cljs_node_repl
 /resources/build/
+/resources/public/js/out
