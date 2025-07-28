@@ -18,13 +18,30 @@
                       :pseudo-names  true}
    :output-to        "out/browser-test/browser-tests.js"}
 
-  :node
+  ;; CommonJS build for Node.js
+  :node-commonjs
   {:target           :node-library
-   :output-to        "out/nodejs/fluree-crypto.js"
-   :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
-                      :optimizations :simple
-                      :externs       ["sjcl-externs.js"]}
-   :exports-var      fluree.crypto-js/exports}
+   :output-to        "dist/nodejs-cjs/fluree-crypto.cjs"
+   :exports          {:normalizeString      fluree.crypto/normalize-string
+                      :stringToByteArray    fluree.crypto/string->byte-array
+                      :byteArrayToString    fluree.crypto/byte-array->string
+                      :sha2_256             fluree.crypto-js/sha2-256
+                      :sha2_256_normalize   fluree.crypto-js/sha2-256-normalize
+                      :sha2_512             fluree.crypto-js/sha2-512
+                      :sha2_512_normalize   fluree.crypto-js/sha2-512-normalize
+                      :aesEncrypt           fluree.crypto-js/aes-encrypt
+                      :aesDecrypt           fluree.crypto-js/aes-decrypt
+                      :generateKeyPair      fluree.crypto-js/generate-key-pair
+                      :accountIdFromPublic  fluree.crypto/account-id-from-public
+                      :accountIdFromPrivate fluree.crypto/account-id-from-private
+                      :didKeyFromPublic     fluree.crypto/did-key-from-public
+                      :publicKeyFromPrivate fluree.crypto/public-key-from-private
+                      :signMessage          fluree.crypto-js/sign-message
+                      :verifySignature      fluree.crypto-js/verify-signature
+                      :randomBytes          fluree.crypto/random-bytes
+                      :createJWS            fluree.crypto-js/create-jws
+                      :verifyJWS            fluree.crypto-js/verify-jws}
+   :compiler-options {:infer-externs true}}
 
   :browser
   {:target           :esm
@@ -50,15 +67,37 @@
                         aesEncrypt           fluree.crypto-js/aes-encrypt
                         aesDecrypt           fluree.crypto-js/aes-decrypt
                         generateKeyPair      fluree.crypto-js/generate-key-pair
-                        pubKeyFromPrivate    fluree.crypto/pub-key-from-private
-                        accountIdFromPublic  fluree.crypto/account-id-from-public
+                         accountIdFromPublic  fluree.crypto/account-id-from-public
                         accountIdFromPrivate fluree.crypto/account-id-from-private
+                        didKeyFromPublic     fluree.crypto/did-key-from-public
                         signMessage          fluree.crypto/sign-message
                         verifySignature      fluree.crypto/verify-signature
-                        pubKeyFromMessage    fluree.crypto/pub-key-from-message
-                        accountIdFromMessage fluree.crypto/account-id-from-message
-                        scryptEncrypt        fluree.crypto/scrypt-encrypt
-                        scryptCheck          fluree.crypto/scrypt-check
                         randomBytes          fluree.crypto/random-bytes
                         createJWS            fluree.crypto/create-jws
-                        verifyJWS            fluree.crypto-js/verify-jws}}}}}}
+                        verifyJWS            fluree.crypto-js/verify-jws}}}}
+                        
+  :node
+  {:target           :esm
+   :output-dir       "out/nodejs"
+   :runtime          :node
+   :modules          {:fluree-crypto 
+                      {:exports {normalizeString      fluree.crypto/normalize-string
+                                 stringToByteArray    fluree.crypto/string->byte-array
+                                 byteArrayToString    fluree.crypto/byte-array->string
+                                 sha2_256             fluree.crypto-js/sha2-256
+                                 sha2_256_normalize   fluree.crypto-js/sha2-256-normalize
+                                 sha2_512             fluree.crypto-js/sha2-512
+                                 sha2_512_normalize   fluree.crypto-js/sha2-512-normalize
+                                 aesEncrypt           fluree.crypto-js/aes-encrypt
+                                 aesDecrypt           fluree.crypto-js/aes-decrypt
+                                 generateKeyPair      fluree.crypto-js/generate-key-pair
+                                 accountIdFromPublic  fluree.crypto/account-id-from-public
+                                 accountIdFromPrivate fluree.crypto/account-id-from-private
+                                 didKeyFromPublic     fluree.crypto/did-key-from-public
+                                 publicKeyFromPrivate fluree.crypto/public-key-from-private
+                                 signMessage          fluree.crypto-js/sign-message
+                                 verifySignature      fluree.crypto-js/verify-signature
+                                 randomBytes          fluree.crypto/random-bytes
+                                 createJWS            fluree.crypto-js/create-jws
+                                 verifyJWS            fluree.crypto-js/verify-jws}}}
+   :compiler-options {:infer-externs true}}}}

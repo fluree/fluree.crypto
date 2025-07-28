@@ -29,7 +29,7 @@ cljs-browser-test:
 cljstest: node_modules cljs-node-test cljs-browser-test
 
 node-test: out/nodejs/fluree-crypto.js
-	cd test/nodejs && npm install && node --experimental-vm-modules node_modules/jest/bin/jest.js
+	cd test/nodejs && npm install && npm test
 
 test: cljtest cljstest node-test
 

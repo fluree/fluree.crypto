@@ -1,5 +1,5 @@
 (ns fluree.crypto.pkcs7-test
-  (:require [cljs.test :refer [deftest is testing run-tests]]
+  (:require [cljs.test :refer [deftest is testing]]
             [alphabase.core :as alphabase]
             [fluree.crypto.pkcs7 :refer [byte? bytes? compare-bytes encode decode]]))
 

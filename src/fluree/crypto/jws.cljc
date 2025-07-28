@@ -1,13 +1,45 @@
 (ns fluree.crypto.jws
-  "An implementation of https://datatracker.ietf.org/doc/html/rfc7515"
+  "An implementation of https://datatracker.ietf.org/doc/html/rfc7515
+  Updated for Ed25519 signatures with public key identification support"
   (:require [alphabase.core :as alphabase]
             [clojure.string :as str]
-            [fluree.crypto.secp256k1 :as secp256k1]))
+            [fluree.crypto.ed25519 :as ed25519]
+            #?(:clj [jsonista.core :as json])))
 
-(def JOSE-header
-  "The JOSE header for a secp256k1 signing key.
-  https://github.com/decentralized-identity/EcdsaSecp256k1RecoverySignature2020"
-  "{\"alg\":\"ES256K-R\",\"b64\":false,\"crit\":[\"b64\"]}")
+(defn- extract-pubkey-from-jwk
+  "Extract public key from JWK header field."
+  [jwk]
+  (when (and (= (:kty jwk) "OKP") (= (:crv jwk) "Ed25519"))
+    (-> (:x jwk)
+        (str (apply str (repeat (mod (- 4 (mod (count (:x jwk)) 4)) 4) "="))) ; add padding
+        (alphabase/base-to-base :base64url :hex))))
+
+(defn- extract-pubkey-from-kid
+  "Extract public key from kid header field (if it's a base58 account ID)."
+  [kid]
+  (when (and (string? kid) 
+             (<= 43 (count kid) 44))  ; Base58 account IDs can be 43-44 chars
+    (try
+      (alphabase/base-to-base kid :base58 :hex)
+      (catch #?(:clj Exception :cljs js/Error) _
+        nil))))
+
+(defn- build-jose-header
+  "Build a JOSE header for Ed25519 with optional key identification.
+  https://tools.ietf.org/html/rfc8037
+  
+  Options map can contain:
+  - :kid - Key identifier (e.g., account ID)
+  - :jwk - JSON Web Key object with the public key"
+  [opts]
+  (let [header {:alg "EdDSA"
+                :b64 false
+                :crit ["b64"]}
+        header-with-opts (cond-> header
+                          (:kid opts) (assoc :kid (:kid opts))
+                          (:jwk opts) (assoc :jwk (:jwk opts)))]
+    #?(:clj  (json/write-value-as-string header-with-opts)
+       :cljs (js/JSON.stringify (clj->js header-with-opts)))))
 
 (defn b64
   "Convert to base64url and remove the trailing padding (=)."
@@ -18,69 +50,122 @@
 
 (defn sign
   [signing-input signing-key]
-  (secp256k1/sign signing-input signing-key))
+  (ed25519/sign signing-input signing-key))
 
 (defn serialize-jws
-  "Create a JWS Compact Serialization of a JSON Web Signature."
-  [payload signing-key]
-  (let [b64-header  (b64 JOSE-header)
-        b64-payload (b64 payload)
-        b64-sig     (b64 (sign (str b64-header "." b64-payload) signing-key))]
-    (str b64-header "." b64-payload "." b64-sig)))
-
-(defn deserialize-jws
-  "Deserialize a compact JWS into its component parts"
-  [jws]
-  (let [[header payload sig] (str/split jws #"\.")]
-    {:header    (alphabase/base-to-base header :base64url :string)
-     :payload   (alphabase/base-to-base payload :base64url :string)
-     :signature (alphabase/base-to-base sig :base64url :hex)}))
+  "Create a JWS Compact Serialization of a JSON Web Signature using Ed25519.
+  Returns the JWS string.
+  
+  Parameters:
+  - payload: string to sign
+  - signing-key: Ed25519 private key hex string or key pair map
+  - opts (optional): map with key identification options:
+    - :kid - Key identifier (string)
+    - :jwk - Include full JSON Web Key
+    - :account-id - Include account ID as kid (boolean, derives public key if needed)
+    - :include-pubkey - Include full public key as jwk (boolean, derives public key if needed)"
+  ([payload signing-key] (serialize-jws payload signing-key {}))
+  ([payload signing-key opts]
+   (let [;; Extract or derive public key when needed for header options
+         public-key (when (or (:account-id opts) (:include-pubkey opts))
+                      (if (map? signing-key)
+                        (:public signing-key)
+                        ;; Derive public key from private key string
+                        (ed25519/public-key-from-private signing-key)))
+         
+         ;; Build header options
+         header-opts (cond-> {}
+                      ;; Add account ID as kid if requested
+                      (and (:account-id opts) public-key)
+                      (assoc :kid (-> public-key
+                                     (alphabase/hex->bytes)
+                                     (alphabase/byte-array-to-base :base58)))
+                      
+                      ;; Add custom kid if provided
+                      (:kid opts)
+                      (assoc :kid (:kid opts))
+                      
+                      ;; Add full public key as JWK if requested
+                      (and (:include-pubkey opts) public-key)
+                      (assoc :jwk {:kty "OKP"
+                                  :crv "Ed25519" 
+                                  :x (-> public-key
+                                        (alphabase/hex->bytes)
+                                        (alphabase/byte-array-to-base :base64url)
+                                        (str/replace "=" ""))})
+                      
+                      ;; Add provided JWK
+                      (:jwk opts)
+                      (assoc :jwk (:jwk opts)))
+         
+         header-json (build-jose-header header-opts)
+         b64-header (b64 header-json)
+         b64-payload (b64 payload)
+         signing-input (str b64-header "." b64-payload)
+         
+         ;; Sign with the appropriate key format
+         sig-hex (sign signing-input signing-key)
+         b64-sig (-> sig-hex
+                    (alphabase/hex->bytes)
+                    (alphabase/byte-array-to-base :base64url)
+                    (str/replace "=" ""))]
+     (str b64-header "." b64-payload "." b64-sig))))
 
 (defn verify
-  [jws]
-  (when (string? jws)
-    (let [[b64-header b64-payload b64-sig] (str/split jws #"\.")
-
-          header  (alphabase/base-to-base b64-header :base64url :string)
-          payload (alphabase/base-to-base b64-payload :base64url :string)
-          sig     (alphabase/base-to-base b64-sig :base64url :string)
-
-          signing-input (str b64-header "." b64-payload)
-          pubkey        (secp256k1/recover-public-key signing-input sig)]
-      (when (not= header JOSE-header)
-        (throw (ex-info "Unsupported JWS header."
-                        {:error :jws/unknown-signing-algorithm
-                         :supported-header JOSE-header
-                         :header header
-                         :jws jws})))
-      (when (not (secp256k1/verify pubkey signing-input sig))
-        (throw (ex-info "JWS verification failed." {:error :jws/invalid-signature
-                                                    :jws jws})))
-      {:payload payload :pubkey pubkey})))
-
-(comment
-  (b64 "{\"typ\":\"JWT\",\"alg\":\"ES256K-R\"}")
-  "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
-
-  (b64 "{\"iss\":\"joe\",\"exp\":1300819380,\"http://example.com/is_root\":true}")
-  "eyJpc3MiOiJqb2UiLCJleHAiOjEzMDA4MTkzODAsImh0dHA6Ly9leGFtcGxlLmNvbS9pc19yb290Ijp0cnVlfQ"
-
-  (b64 "83b3bec44b9cf25bb6c4bc81a283cf415e744588aec107c31c91d160845f7b92")
-  "ODNiM2JlYzQ0YjljZjI1YmI2YzRiYzgxYTI4M2NmNDE1ZTc0NDU4OGFlYzEwN2MzMWM5MWQxNjA4NDVmN2I5Mg"
-
-  (alphabase/base-to-base "MWMzMDQ0MDIyMDBmNjk3YTAyNDAxMmVmZDUzYTg2Njk2NTEwMWQwNmIxODllOGUxYzY1OTcwMGIwNjczYTFiYTk4MjEwZGU0ZmMwMjIwNDQyOGJiOGIzNmRmNDg1NGEyOWZkMTBlMmUxMWM5MzQ2MDZiNDgyMjRjMGMzNmY2ZDc0YzNhZGZhYTA0MGZmZA" :base64url :string)
-  "1c304402200f697a024012efd53a866965101d06b189e8e1c659700b0673a1ba98210de4fc02204428bb8b36df4854a29fd10e2e11c934606b48224c0c36f6d74c3adfaa040ffd"
-
-  (serialize-jws "{\"hello\":\"there\"}" "659a50e1be866d402c6f8175c22af38a1b4fe2ec510dcc50f5babfea5b35933f")
-  "eyJhbGciOiJFUzI1NkstUiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.eyJoZWxsbyI6InRoZXJlIn0.MWMzMDQ0MDIyMDMwYTBkN2JjM2NmYTU0ZWZhZmZkZjdlMTU0MTZiNzE5OWMxZDFkMWQ2NmRhOTQxODg3ZDAwZWE1YjUxNGZjZDgwMjIwNmQ2OTYwOWFlODNiODQ4OGI3MDRiNzczODkxZGRiNTVlMDM3NzQwNjE0NWJjNTBiYjlmN2UxYmMxMTI5ZWQ0Mw"
-
-  (verify "eyJhbGciOiJFUzI1NkstUiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19.eyJoZWxsbyI6InRoZXJlIn0.MWMzMDQ0MDIyMDMwYTBkN2JjM2NmYTU0ZWZhZmZkZjdlMTU0MTZiNzE5OWMxZDFkMWQ2NmRhOTQxODg3ZDAwZWE1YjUxNGZjZDgwMjIwNmQ2OTYwOWFlODNiODQ4OGI3MDRiNzczODkxZGRiNTVlMDM3NzQwNjE0NWJjNTBiYjlmN2UxYmMxMTI5ZWQ0Mw")
-
-  "eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NkstUiJ9.eyJoZWxsbyI6InRoZXJlIn0.MWMzMDQ0MDIyMDBmNjk3YTAyNDAxMmVmZDUzYTg2Njk2NTEwMWQwNmIxODllOGUxYzY1OTcwMGIwNjczYTFiYTk4MjEwZGU0ZmMwMjIwNDQyOGJiOGIzNmRmNDg1NGEyOWZkMTBlMmUxMWM5MzQ2MDZiNDgyMjRjMGMzNmY2ZDc0YzNhZGZhYTA0MGZmZA"
-
-;; header;
-  "alg" "ES256K"
-  "jwk" "pubkey as jwk"
-  "typ" "JOSE"                          ; indicates compact serialization
-  "typ" "JOSE+JSON"                     ; indicates JSON serialization
-  )
+  "Verify a JWS using Ed25519. Can provide public key directly or extract from JWS header.
+  Returns result map if valid, or Exception if invalid.
+  
+  Parameters:
+  - jws: JWS string in compact format
+  - public-key (optional): Ed25519 public key hex string. If nil, will try to extract from JWS header
+  
+  Returns:
+  - Success: {:payload payload :pubkey pubkey :header header-map :kid kid-if-present}
+  - Error: Exception with details"
+  ([jws] (verify jws nil))
+  ([jws public-key]
+   (if (string? jws)
+     (let [[b64-header b64-payload b64-sig] (str/split jws #"\.")
+           header-str (alphabase/base-to-base b64-header :base64url :string)
+           payload (alphabase/base-to-base b64-payload :base64url :string)
+           sig (alphabase/base-to-base b64-sig :base64url :hex)
+           signing-input (str b64-header "." b64-payload)]
+       
+       (try
+         (let [header-map #?(:clj  (json/read-value header-str json/keyword-keys-object-mapper)
+                                 :cljs (js->clj (js/JSON.parse header-str) :keywordize-keys true))
+               
+               ;; Validate algorithm
+               _ (when (not= (:alg header-map) "EdDSA")
+                   (throw (ex-info "Unsupported JWS algorithm. Expected EdDSA."
+                                   {:error :jws/unsupported-algorithm
+                                    :expected "EdDSA"
+                                    :actual (:alg header-map)
+                                    :header header-map})))
+               
+               ;; Extract public key from header if not provided
+               derived-pubkey (or public-key
+                                  (extract-pubkey-from-jwk (:jwk header-map))
+                                  (extract-pubkey-from-kid (:kid header-map))
+                                  (throw (ex-info "No public key provided and none found in JWS header."
+                                                  {:error :jws/missing-public-key
+                                                   :header header-map
+                                                   :suggestion "Provide public-key parameter or include jwk/kid in header"})))
+               
+               ;; Verify signature
+               valid? (ed25519/verify derived-pubkey signing-input sig)]
+           
+           (if valid?
+             {:payload payload
+              :pubkey derived-pubkey
+              :header header-map
+              :kid (:kid header-map)}
+             (ex-info "JWS signature verification failed."
+                      {:error :jws/invalid-signature
+                       :header header-map
+                       :pubkey derived-pubkey})))
+         
+         (catch #?(:clj Exception :cljs js/Error) e
+           e)))
+     
+     (ex-info "JWS must be a string" {:error :jws/invalid-format :jws jws}))))

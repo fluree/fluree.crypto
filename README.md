@@ -1,412 +1,455 @@
 ## Cryptography Library for Fluree
 
-A collection of Javascript cryptography functions for Fluree.
+A collection of cryptography functions for Fluree, implemented in Clojure/ClojureScript with platform-specific optimizations.
 
-## Utility Functions
+## Features
 
-### Normalize String
+- **Ed25519 Digital Signatures** - Fast, secure signatures using Noble Ed25519 (JS) and Java 17+ native support (JVM)
+- **JWS (JSON Web Signatures)** - RFC 7515/8037 compliant JWS creation and verification
+- **DID Support** - Decentralized identifier generation and verification (did:key method)
+- **SHA-2 Hashing** - SHA-256 and SHA-512 implementations
+- **AES Encryption** - Symmetric encryption/decryption
+- **Cross-platform** - Consistent API across JVM, Node.js, and browser environments
+- **GraalVM Native Image Support** - Can be compiled to native executables
 
-- Arguments: `string`
-- Returns: `string`
+## Installation
 
-Normalizes string using the [NKFC](http://unicode.org/reports/tr15/) standard to ensure consistent hashing.
+### Clojure/ClojureScript
 
-`const normalApple = crypto.normalizeString("\u0041\u030apple")`
+Add to your `deps.edn`:
 
-For example, we can see that:
-
-`crypto.sha2_256("\u0041\u030apple")` results in `6e9288599c1ff90127459f82285327c83fa0541d8b7cd215d0cd9e587150c15f`.
-
-While using the normalized version of the string
-
-`crypto.sha2_256_normalize(normalApple)` results in `58acf888b520fe51ecc0e4e5eef46c3bea3ca7df4c11f6719a1c2471bbe478bf`.
-
-### String to Byte Array
-
-- Arguments: `string` or `byte-array`
-- Returns: `byte-array`
-
-This functions normalizes a string and returns a byte-array. If it is already a byte-array, it returns itself.
-
-For example:
-
-`crypto.stringToByteArray("hi there")` results in `[104, 105, 32, 116, 104, 101, 114, 101]`.
-
-
-### Byte Array to String
-
-- Arguments: `byte-array`
-- Returns: `byte-array`
-
-This functions takes a byte-array and returns a string.
-
-`crypto.byteArrayToString([104, 105, 32, 116, 104, 101, 114, 101])` results in `hi there`.
-
-## Public-key Cryptography
-
-### Generate Key Pair
-
-- Arguments: `none` or `private-key-as-hex-string`
-- Returns: `{ private: "private-key-as-hex-string", public: "public-key-as-hex-string" } `
-
-This function will return a map with a public and private key:
-
-`crypto.generateKeyPair();` will return a valid public-private key pair.
-
-For example, this might return:
-
-`{ private: "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2",
-public: "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391"}`.
-
-You can also call this function with a private key already provided.
-
-`crypto.generateKeyPair("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
-
-This will return:
-
-`{ private: "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2",
-public: "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391"}`.
-
-### Public Key from Private
-
-- Arguments: `private-key-as-hex-string`
-- Returns: `public-key-as-hex-string`
-
-Given a private key, this returns a public key:
-
-`crypto.pubKeyFromPrivate("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
-
-This will return: `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391`;
-
-### Account Id from Private
-
-- Arguments: `private-key-as-hex-string`
-- Returns: `account-id`
-
-Given a private key, this will return an account id:
-
-`crypto.accountIdFromPrivate("6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");`
-
-This will return `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
-
-### Account Id from Public
-
-- Arguments: `public-key-as-hex-string`
-- Returns: `account-id`
-
-Given a public key, this will return an account id:
-
-`crypto.accountIdFromPublic("02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391");`
-
-This will return `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
-
-### Sign Message
-
-- Arguments: `message, private-key-as-hex-string`
-- Returns: `signature`
-
-Given a message and a private key, this will return a signature.
-
-```
-const message = "hi there";
-const privateKey = "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2";
-
-crypto.signMessage(message, privateKey);
+```clojure
+{:deps {com.fluree/crypto {:mvn/version "4.0.0"}}}
 ```
 
-This returns:
+### Node.js
 
-```
-1b3046022100cbd32e463567fefc2f120425b0224d9d263008911653f50e83953f47cfbef3bc022100fcf81206277aa1b86d2667b4003f44643759b8f4684097efd92d56129cd89ea8
-```
-### Verify Signature
-
-- Arguments: `public-key-as-hex-string, message, signature`
-- Returns: `true` or `false`
-
-Given a public key, message, and a signature, this function will return true or false.
-
-```
-const message = "hi there";
-const privateKey = "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2";
-const publicKey = "02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391";
-const signature = crypto.signMessage(message, privateKey);
-
-crypto.verifySignature(publicKey, message, signature);
-
+```bash
+npm install @fluree/crypto
 ```
 
-This returns `true`.
+### Browser
 
-### Public Key from Message
+The browser build is available at `dist/browser/fluree-crypto.js` after building.
 
-- Arguments: `message, signature`
-- Returns: `true` or `false`
+## API Reference
 
-```
-const message = "hi there";
-const signature = crypto.signMessage(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
+### Key Generation
 
-crypto.pubKeyFromMessage(message, signature);
-```
+#### Generate Key Pair
 
-This returns `02991719b37817f6108fc8b0e824d3a9daa3d39bc97ecfd4f8bc7ef3b71d4c6391`.
+```clojure
+;; Clojure
+(require '[fluree.crypto :as crypto])
 
-### Account Id from Message
+;; Generate a new Ed25519 key pair
+(crypto/generate-key-pair)
+;; => {:private "hex-string", :public "hex-string"}
 
-- Arguments: `message, signature`
-- Returns: `true` or `false`
-
-```
-const message = "hi there";
-const signature = crypto.signMessage(message, "6a5f415f49986006815ae7887016275aac8ffb239f9a2fa7172300578582b6c2");
-
-crypto.accountIdFromMessage(message, signature);
+;; Generate from existing private key
+(crypto/generate-key-pair "your-private-key-hex")
 ```
 
-This returns `TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV`.
+```javascript
+// JavaScript
+// Generate a new Ed25519 key pair
+const keyPair = crypto.generateKeyPair();
+// Returns: { private: "hex-string", public: "hex-string" }
 
-## Hashing
-
-### SHA2 256
-
-- Arguments: `string or byte-array` or `string or byte-array, output-format` or `input in input format, output-format, input-format`
-- Returns: By default `hex-string`.
-
-Valid input and output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha2_256("hi");` returns:
-
-`8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4`.
-
-### SHA2 256 Normalize
-
-- Arguments: `string` or `string, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha2_256_normalize("hi")` returns:
-
-`8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4`.
-
-### SHA2 512
-
-- Arguments: `string or byte-array` or `string or byte-array, output-format` or `input in input format, output-format, input-format`
-- Returns: By default `hex-string`.
-
-Valid input and output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha2_512("hi");` returns:
-
-`150a14ed5bea6cc731cf86c41566ac427a8db48ef1b9fd626664b3bfbb99071fa4c922f33dde38719b8c8354e2b7ab9d77e0e67fc12843920a712e73d558e197`.
-
-### SHA2 512 Normalize
-
-- Arguments: `string` or `string, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha2_512_normalize("hi");` returns:
-
-`150a14ed5bea6cc731cf86c41566ac427a8db48ef1b9fd626664b3bfbb99071fa4c922f33dde38719b8c8354e2b7ab9d77e0e67fc12843920a712e73d558e197`.
-
-### SHA3 256
-
-- Arguments: `string or byte-array` or `string or byte-array, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha3_256("hi");` returns:
-crypto
-`b39c14c8da3b23811f6415b7e0b33526d7e07a46f2cf0484179435767e4a8804`.
-
-### SHA3 256 Normalize
-
-- Arguments: `string` or `string, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha3_256_normalize("hi");` returns:
-
-`b39c14c8da3b23811f6415b7e0b33526d7e07a46f2cf0484179435767e4a8804`.
-
-### SHA3 512
-
-- Arguments: `string or byte-array` or `string or byte-array, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha3_512("hi");` returns:
-
-`154013cb8140c753f0ac358da6110fe237481b26c75c3ddc1b59eaf9dd7b46a0a3aeb2cef164b3c82d65b38a4e26ea9930b7b2cb3c01da4ba331c95e62ccb9c3`.
-
-### SHA3 512 Normalize
-
-- Arguments: `string` or `string, output-format`
-- Returns: By default `hex string`.
-
-Valid output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.sha3_512_normalize("hi");` returns:
-
-`154013cb8140c753f0ac358da6110fe237481b26c75c3ddc1b59eaf9dd7b46a0a3aeb2cef164b3c82d65b38a4e26ea9930b7b2cb3c01da4ba331c95e62ccb9c3`.
-
-### RIPEMD-160
-
-- Arguments: `string` or `string, output-format` or `string, output-format, input-format`
-- Returns: By default `hex-string`.
-
-Valid input or output formats: `hex`, `bytes`, `base64`, `base58`, `string`.
-
-This function: `crypto.ripemd_160("hi");` returns `242485ab6bfd3502bcb3442ea2e211687b8e4d89`.
-
-## Encryption
-
-### AES Encrypt
-
-- Arguments: `message, iv, key` or `message, iv, key, output-format`
-- Returns: By default `hex-string`.
-
-Valid output formats: `hex`, `base64`.
-
-```
-const initialization_vector = [6, 224, 71, 170, 241, 204, 115, 21, 30, 8, 46, 223, 106, 207, 55, 42];
-const message = "hi";
-const key = "there";
-
-crypto.aesEncrypt(message, initialization_vector, key);
+// Generate from existing private key
+const keyPair2 = crypto.generateKeyPair("your-private-key-hex");
 ```
 
-This returns: `668cd07d1a17cc7a8a0390cf017ac7ef`.
+#### Public Key from Private
 
-### AES Decrypt
-
-- Arguments: `x, iv, key` or `x, iv, key, output-format` or `x, iv, key, output-format, input-format`
-- Returns: By default `hex-string`.
-
-```
-const initialization_vector = [6, 224, 71, 170, 241, 204, 115, 21, 30, 8, 46, 223, 106, 207, 55, 42];
-const message = "hi";
-const key = "there";
-const encrypted = crypto.aesEncrypt(message, initialization_vector, key);
-
-crypto.aesDecrypt(encrypted, initialization_vector, key);
+```clojure
+;; Clojure
+(crypto/public-key-from-private "private-key-hex")
+;; => "public-key-hex"
 ```
 
-This returns: `hi`.
-
-### Scrypt Encrypt
-
-- Arguments: `message` or `message, salt` or `message, salt, n` or `message, salt, n, r, p` or `message, salt, n, r, p, dk-len`
-- Returns: `hex-string`.
-
-The arguments by default:
-
-- `salt`: 16 random bytes
-- `n`: 32,768
-- `r`: 8
-- `p`: 1
-- `dk-len`: 32
-
-
-```
-const salt = [172, 28, 242, 108, 175, 130, 214, 6, 249, 61, 244, 178, 34, 8, 13, 178];
-
-crypto.scryptEncrypt("hi", salt)
+```javascript
+// JavaScript
+const publicKey = crypto.publicKeyFromPrivate("private-key-hex");
+// Returns: "public-key-hex"
 ```
 
-This results in `57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4`.
+### Account IDs and DIDs
 
-### Scrypt Check
+#### Account ID from Public Key
 
-- Arguments: `message, encrypted, salt` or `message, encrypted, salt, n, r, p`
-- Returns: `true` or `false`
+```clojure
+;; Clojure
+(crypto/account-id-from-public "public-key-hex")
+;; => "base58-account-id" (e.g., "TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV")
 
-The arguments by default:
-
-- `n`: 32,768
-- `r`: 8
-- `p`: 1
-
-```
-const salt = [172, 28, 242, 108, 175, 130, 214, 6, 249, 61, 244, 178, 34, 8, 13, 178];
-
-crypto.scryptEncrypt("hi", salt, 32768, 8, 1)
-
-crypto.scryptCheck("hi", "57f93bcf926c31a9e2d2129da84bfca51eb9447dfe1749b62598feacaad657d4", salt, 32768, 8, 1)
+;; With output format
+(crypto/account-id-from-public "public-key-hex" {:output-format :multibase})
+;; => "did:key:z6Mk..." format
 ```
 
-## Contributing
+```javascript
+// JavaScript
+const accountId = crypto.accountIdFromPublic("public-key-hex");
+// Returns: "base58-account-id" (e.g., "TfGvAdKH2nRdV4zP4yBz4kJ2R9WzYHDe2EV")
+```
 
-Clone this repo to your local machine and create a new branch for your work.
+#### Account ID from Private Key
 
-You'll need the Clojure CLI tools installed for development and testing of this library.
+```clojure
+;; Clojure
+(crypto/account-id-from-private "private-key-hex")
+;; => "base58-account-id"
+```
 
-- macOS
-    - `brew install clojure/tools/clojure`
+```javascript
+// JavaScript
+const accountId = crypto.accountIdFromPrivate("private-key-hex");
+// Returns: "base58-account-id"
+```
 
-You will also need the NodeJS and NPM tools installed.
+#### DID from Public Key
 
-- macOS
-    - `brew install node`
-    - `brew install npm`
+```clojure
+;; Clojure
+(crypto/did-from-public "public-key-hex")
+;; => "did:key:z6Mk..." (multibase-encoded DID)
+```
 
-### Tests
+```javascript
+// JavaScript
+const did = crypto.didFromPublic("public-key-hex");
+// Returns: "did:key:z6Mk..." (multibase-encoded DID)
+```
 
-You can run the CLJ and CLJS test suites like this: `make test`.
+### Digital Signatures
 
-If you want to run one or the other you can do `make cljtest` or `make cljstest`.
+#### Sign Message
+
+```clojure
+;; Clojure
+(crypto/sign-message "message" "private-key-hex")
+;; => "signature-hex"
+
+;; With key pair map
+(crypto/sign-message "message" {:private "private-key-hex" :public "public-key-hex"})
+```
+
+```javascript
+// JavaScript
+const signature = crypto.signMessage("message", "private-key-hex");
+// Returns: "signature-hex"
+```
+
+#### Verify Signature
+
+```clojure
+;; Clojure
+(crypto/verify-signature "public-key-hex" "message" "signature-hex")
+;; => true or false
+```
+
+```javascript
+// JavaScript
+const isValid = crypto.verifySignature("public-key-hex", "message", "signature-hex");
+// Returns: true or false
+```
+
+### JWS (JSON Web Signatures)
+
+#### Create JWS
+
+```clojure
+;; Clojure
+;; Basic JWS
+(crypto/create-jws "payload" keypair)
+;; => "header.payload.signature"
+
+;; With embedded public key (for self-contained verification)
+(crypto/create-jws "payload" keypair {:include-pubkey true})
+
+;; With key ID (account ID)
+(crypto/create-jws "payload" keypair {:account-id true})
+
+;; With custom key ID
+(crypto/create-jws "payload" keypair {:kid "my-key-id"})
+```
+
+```javascript
+// JavaScript
+// Basic JWS
+const jws = crypto.createJWS("payload", keyPair);
+// Returns: "header.payload.signature"
+
+// With embedded public key (for self-contained verification)
+const jws2 = crypto.createJWS("payload", keyPair, { includePublicKey: true });
+
+// With key ID (account ID)
+const jws3 = crypto.createJWS("payload", keyPair, { accountId: true });
+
+// With custom key ID
+const jws4 = crypto.createJWS("payload", keyPair, { kid: "my-key-id" });
+```
+
+#### Verify JWS
+
+```clojure
+;; Clojure
+;; Verify with explicit public key
+(crypto/verify-jws jws "public-key-hex")
+;; => {:payload "original-payload", :pubkey "public-key-hex", :header {...}}
+
+;; Verify self-contained JWS (with embedded key or account ID)
+(crypto/verify-jws jws)
+;; => {:payload "...", :pubkey "...", :header {...}, :kid "..."}
+
+;; Error case returns an Exception
+(crypto/verify-jws "invalid-jws")
+;; => #error {:cause "..." :data {...}}
+```
+
+```javascript
+// JavaScript
+// Verify with explicit public key
+const result = crypto.verifyJWS(jws, "public-key-hex");
+// Returns: { payload: "original-payload", pubkey: "public-key-hex", header: {...} }
+
+// Verify self-contained JWS (with embedded key or account ID)
+const result2 = crypto.verifyJWS(jws2);
+// Returns: { payload: "...", pubkey: "...", header: {...}, kid: "..." }
+
+// Error case returns an Error object
+const error = crypto.verifyJWS("invalid-jws");
+// Returns: Error instance
+```
+
+### Hashing
+
+#### SHA-256
+
+```clojure
+;; Clojure
+;; Basic usage
+(crypto/sha2-256 "message")
+;; => "hex-string"
+
+;; With output format
+(crypto/sha2-256 "message" :bytes)
+;; Valid formats: :hex, :bytes, :base64, :base58, :string
+
+;; With input and output format
+(crypto/sha2-256 "68656c6c6f" :base64 :hex)
+```
+
+```javascript
+// JavaScript
+// Basic usage
+const hash = crypto.sha2_256("message");
+// Returns: "hex-string"
+
+// With output format
+const hashBytes = crypto.sha2_256("message", "bytes");
+// Valid formats: "hex", "bytes", "base64", "base58", "string"
+
+// With input and output format
+const hash2 = crypto.sha2_256("68656c6c6f", "base64", "hex");
+```
+
+#### SHA-256 Normalize
+
+Normalizes the input string using NFKC before hashing:
+
+```clojure
+;; Clojure
+(crypto/sha2-256-normalize "message")
+;; => "hex-string"
+
+;; With output format
+(crypto/sha2-256-normalize "message" :base64)
+```
+
+```javascript
+// JavaScript
+const hash = crypto.sha2_256_normalize("message");
+// Returns: "hex-string"
+```
+
+#### SHA-512
+
+```clojure
+;; Clojure
+(crypto/sha2-512 "message")
+;; => "hex-string"
+
+;; With formats (same as SHA-256)
+(crypto/sha2-512 "message" :base64)
+```
+
+```javascript
+// JavaScript
+const hash = crypto.sha2_512("message");
+// Returns: "hex-string"
+
+// With formats (same as SHA-256)
+const hashBase64 = crypto.sha2_512("message", "base64");
+```
+
+### Encryption
+
+#### AES Encrypt
+
+```clojure
+;; Clojure
+(def iv [6 224 71 170 241 204 115 21 30 8 46 223 106 207 55 42])
+(crypto/aes-encrypt "message" iv "password")
+;; => "hex-string"
+
+;; With output format
+(crypto/aes-encrypt "message" iv "password" :base64)
+```
+
+```javascript
+// JavaScript
+const iv = [6, 224, 71, 170, 241, 204, 115, 21, 30, 8, 46, 223, 106, 207, 55, 42];
+const encrypted = crypto.aesEncrypt("message", iv, "password");
+// Returns: "hex-string"
+
+// With output format
+const encryptedBase64 = crypto.aesEncrypt("message", iv, "password", "base64");
+```
+
+#### AES Decrypt
+
+```clojure
+;; Clojure
+(crypto/aes-decrypt encrypted iv "password")
+;; => "message"
+
+;; With input/output formats
+(crypto/aes-decrypt encrypted-base64 iv "password" :string :base64)
+```
+
+```javascript
+// JavaScript
+const decrypted = crypto.aesDecrypt(encrypted, iv, "password");
+// Returns: "message"
+
+// With input/output formats
+const decrypted2 = crypto.aesDecrypt(encryptedBase64, iv, "password", "string", "base64");
+```
+
+### Utility Functions
+
+#### Normalize String
+
+```clojure
+;; Clojure
+(crypto/normalize-string "\u0041\u030apple")
+;; => NFKC normalized string
+```
+
+```javascript
+// JavaScript
+const normalized = crypto.normalizeString("\u0041\u030apple");
+// Returns NFKC normalized string
+```
+
+#### String to Byte Array
+
+```clojure
+;; Clojure
+(crypto/string->byte-array "hello")
+;; => [104 101 108 108 111]
+```
+
+```javascript
+// JavaScript
+const bytes = crypto.stringToByteArray("hello");
+// Returns: [104, 101, 108, 108, 111]
+```
+
+#### Byte Array to String
+
+```clojure
+;; Clojure
+(crypto/byte-array->string [104 101 108 108 111])
+;; => "hello"
+```
+
+```javascript
+// JavaScript
+const str = crypto.byteArrayToString([104, 101, 108, 108, 111]);
+// Returns: "hello"
+```
+
+## Platform-Specific Implementation Details
+
+### JavaScript (Node.js/Browser)
+- Uses [@noble/ed25519](https://github.com/paulmillr/noble-ed25519) v2.3.0 for Ed25519 operations
+- Pure JavaScript implementation ensures consistent behavior
+
+### JVM
+- Uses Java 17+ native Ed25519 support via JCA/JCE
+- `EdECPrivateKeySpec` and `EdECPublicKeySpec` for key management
+- Hardware-accelerated when available
+
+## Development
+
+### Prerequisites
+
+- Clojure CLI tools
+- Node.js and npm
+- Java 17+
 
 ### Building
 
-#### ClojureScript
+```bash
+# Build everything
+make all
 
-Run `make` to build the CLJS library JAR. It will create or update
-`target/fluree-crypto.jar`.
+# Build JAR only
+make jar
 
-To test this in another CLJS project, just point that project's `deps.edn`
-`:deps` entry at `:local/root "../path/to/fluree.crypto"`.
+# Build Node.js package
+make node
 
-#### Node
+# Build browser package
+make browser
+```
 
-Run `make node` to build the NodeJS library in `out/nodejs/fluree-crypto.js`.
+### Testing
 
-To test this in another Node project, run `npm install --save
-../path/to/fluree.crypto`. That will point `@fluree/crypto` at this working
-directory.
+```bash
+# Run all tests
+make test
 
-#### Browser
+# Run specific test suites
+make cljtest      # JVM tests
+make cljstest     # ClojureScript tests
+make node-test    # Node.js integration tests
+```
 
-Run `make browser` to build the browser library in `out/browser/fluree-crypto.js`.
+### GraalVM Native Image
 
-To test this you can run `npx shadow-cljs watch browser` and then open
-`http://localhost:8000/` in a web browser. You should see a byte array output
-on the web page.
+The library supports GraalVM native image compilation. See `README-graalvm.md` for details.
 
-### Installing
+## Changes from v3.x
 
-You can install the JAR locally with:
+- **Ed25519 only**: Removed SECP256K1 support (use v3.x if needed)
+- **No SHA-3/RIPEMD**: Removed to improve GraalVM compatibility
+- **Upgraded dependencies**: Noble Ed25519 v2.3.0, Java 17+ required
+- **New features**: DID support, automatic public key derivation in JWS
 
-`make install`
+## Contributing
 
-### Deploying
+1. Fork and clone the repository
+2. Create a branch for your feature
+3. Write tests for new functionality
+4. Ensure all tests pass with `make test`
+5. Submit a pull request
 
-You can deploy to Clojars with the following:
+## License
 
-`env CLOJARS_USERNAME=your-user CLOJARS_PASSWORD=your-deploy-token make deploy`
+Copyright © 2025 Fluree, PBC
 
-You can deploy to npmjs.com with the following:
-
-`npm publish`
-
-### CI/CD
-
-The CI/CD pipeline is run inside a Docker container. You can run this locally if you have
-Docker installed via:
-
-`script/run-in-docker.sh make test`
+Distributed under the MIT License.

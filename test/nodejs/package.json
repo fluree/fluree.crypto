@@ -1,9 +1,8 @@
 {
   "name": "fluree-node-crypto-test",
-  "dependencies": {"@fluree/crypto": "file:../../out/nodejs/fluree-crypto.js"},
-  "scripts": {"test": "jest"},
-  "devDependencies": {
-    "jest": "^29.7.0",
-    "prettier": "^3.0.3"
+  "type": "module",
+  "dependencies": {"@fluree/crypto": "file:../../out/nodejs"},
+  "scripts": {
+    "test": "node test.mjs"
   }
 }

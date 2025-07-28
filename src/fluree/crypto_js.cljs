@@ -1,58 +1,56 @@
 (ns fluree.crypto-js
-  (:require [fluree.crypto :as fc]
-            [fluree.crypto.jws :as jws]))
+  "JavaScript-friendly wrappers for fluree.crypto functions.
+  All functions now return values synchronously."
+  (:require [fluree.crypto :as fc]))
 
 (defn ^:export sha2-256
-  [& args] ; TS types don't work well with multi-arity fns
+  [& args]
   (apply fc/sha2-256 args))
 
 (defn ^:export sha2-256-normalize
-  [& args] ; TS types don't work well with multi-arity fns
+  [& args]
   (apply fc/sha2-256-normalize args))
 
 (defn ^:export sha2-512
-  [& args] ; TS types don't work well with multi-arity fns
+  [& args]
   (apply fc/sha2-512 args))
 
 (defn ^:export sha2-512-normalize
-  [& args] ; TS types don't work well with multi-arity fns
+  [& args]
   (apply fc/sha2-512-normalize args))
-
-(defn ^:export sha3-256
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-256 args))
-
-(defn ^:export sha3-256-normalize
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-256-normalize args))
-
-(defn ^:export sha3-512
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-512 args))
-
-(defn ^:export sha3-512-normalize
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/sha3-512-normalize args))
-
-(defn ^:export ripemd-160
-  [& args] ; TS types don't work well with multi-arity fns
-  (apply fc/ripemd-160 args))
 
 (defn ^:export aes-encrypt
   [& args]
   (apply fc/aes-encrypt args))
 
 (defn ^:export aes-decrypt
-  [& args] ; TS types don't work well with multi-arity fns
+  [& args]
   (apply fc/aes-decrypt args))
 
 (defn ^:export generate-key-pair
-  [& args] ; multi-arity fns don't play well with TS types
+  [& args]
   (clj->js (apply fc/generate-key-pair args)))
 
 (defn ^:export verify-jws
-  [jws]
-  (-> jws fc/verify-jws clj->js))
+  [jws public-key]
+  (let [result (fc/verify-jws (str jws) (if public-key (str public-key) nil))]
+    (if (instance? js/Error result)
+      result
+      (clj->js result))))
+
+(defn ^:export sign-message
+  [message private-key]
+  (fc/sign-message (str message) (str private-key)))
+
+(defn ^:export verify-signature
+  [pub-key message signature]
+  (fc/verify-signature (str pub-key) (str message) (str signature)))
+
+(defn ^:export create-jws
+  ([payload signing-key]
+   (fc/create-jws (str payload) (str signing-key)))
+  ([payload signing-key opts]
+   (fc/create-jws (str payload) (str signing-key) (js->clj opts :keywordize-keys true))))
 
 (def ^:export exports
   #js {:normalizeString      fc/normalize-string
@@ -62,23 +60,15 @@
        :sha2_256_normalize   sha2-256-normalize
        :sha2_512             sha2-512
        :sha2_512_normalize   sha2-512-normalize
-       :sha3_256             sha3-256
-       :sha3_256_normalize   sha3-256-normalize
-       :sha3_512             sha3-512
-       :sha3_512_normalize   sha3-512-normalize
-       :ripemd_160           ripemd-160
        :aesEncrypt           aes-encrypt
        :aesDecrypt           aes-decrypt
        :generateKeyPair      generate-key-pair
-       :pubKeyFromPrivate    fc/pub-key-from-private
        :accountIdFromPublic  fc/account-id-from-public
        :accountIdFromPrivate fc/account-id-from-private
-       :signMessage          fc/sign-message
-       :verifySignature      fc/verify-signature
-       :pubKeyFromMessage    fc/pub-key-from-message
-       :accountIdFromMessage fc/account-id-from-message
-       :scryptEncrypt        fc/scrypt-encrypt
-       :scryptCheck          fc/scrypt-check
+       :didKeyFromPublic     fc/did-key-from-public
+       :publicKeyFromPrivate fc/public-key-from-private
+       :signMessage          sign-message
+       :verifySignature      verify-signature
        :randomBytes          fc/random-bytes
-       :createJWS            fc/create-jws
+       :createJWS            create-jws
        :verifyJWS            verify-jws})

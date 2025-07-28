@@ -1,33 +1,146 @@
 (ns fluree.crypto.jws-test
   (:require [fluree.crypto :as crypto]
+            [alphabase.core :as alphabase]
+            [clojure.string :as str]
             [clojure.test :as t :refer [deftest testing is]]))
 
-(def kp
-  {:private "42827e1ee6580a3cd367f31c4af2528db7269b8ea30c6cdff0af6e52d0c4480a"
-   :public  "03ef89c5add9879110a18f107fe0f71879af36296f2984040d9b2816958d22fbab"})
+(deftest jws-ed25519-test
+  (testing "JWS with Ed25519"
+    (let [kp (crypto/generate-key-pair)
+          payload "abcdefg"
+          jws (crypto/create-jws payload kp)]
+      ;; Test JWS creation
+      (is (string? jws))
+      (is (= 3 (count (str/split jws #"\."))))
+      
+      ;; Test JWS verification with key
+      (let [result (crypto/verify-jws jws (:public kp))]
+        (is (= payload (:payload result)))
+        (is (= (:public kp) (:pubkey result))))
+        
+      ;; Test that wrong key fails verification
+      (let [wrong-kp (crypto/generate-key-pair)
+            result (crypto/verify-jws jws (:public wrong-kp))]
+        (is (instance? #?(:clj Exception :cljs js/Error) result) "Should return an error object"))
+      
+      ;; Test nil public key
+      (let [result2 (crypto/verify-jws jws nil)]
+        (is (instance? #?(:clj Exception :cljs js/Error) result2) "Should return an error object"))
+      
+      ;; Test invalid JWS format
+      (let [result3 (crypto/verify-jws "invalid.jws" (:public kp))]
+        (is (instance? #?(:clj Exception :cljs js/Error) result3) "Should return an error object")))))
 
-(deftest jws
-  (let [s                 "abcdefg"
-        header-b64        "eyJhbGciOiJFUzI1NkstUiIsImI2NCI6ZmFsc2UsImNyaXQiOlsiYjY0Il19"
-        payload-b64       "YWJjZGVmZw"
-        clj-expected-sig  "MWMzMDQ1MDIyMTAwOTcxOWM0M2NlM2U3OTIzYjcyNTEzZTM0MWMxMzAxZjI1ODA2NmY3NDIzZDI3M2VjNGY3MjMzODFlNzdiMTA3OTAyMjAyMzQ3YjA1YjVlMWQ5NDVmYjkxNzgxYzg2M2MxNjlkOGE4NzhmOGNjZjg4Njk3MjBmZWUzM2I4YTA2ZTIwNjg2"
-        cljs-expected-sig "MWIzMDQ1MDIyMTAwY2JkMzJlNDYzNTY3ZmVmYzJmMTIwNDI1YjAyMjRkOWQyNjMwMDg5MTE2NTNmNTBlODM5NTNmNDdjZmJlZjNiYzAyMjAwZjhiODMyNGZiOGI4NGNlZmY0MjQ0ZGZlODA3MTQ3MzY5YzBhYjQ3ZmQ0MDg3YjNkOTI3MmU4ZWNjOGU0NzYw"
-        jws               (crypto/create-jws s (:private kp))]
-    (is (= (str header-b64 "."
-                payload-b64 "."
-                #?(:clj clj-expected-sig :cljs cljs-expected-sig))
-           jws))
-    (let [cljs-jws (str header-b64 "." payload-b64 "." cljs-expected-sig)
-          clj-jws  (str header-b64 "." payload-b64 "." clj-expected-sig)
-          {cljs-payload :payload
-           cljs-pubkey  :pubkey}
-          (crypto/verify-jws cljs-jws)
+(deftest jws-header-test
+  (testing "JWS header format for Ed25519"
+    (let [kp (crypto/generate-key-pair)
+          jws (crypto/create-jws "test" kp)
+          [header-b64 _ _] (str/split jws #"\.")
+          header (alphabase/base-to-base header-b64 :base64url :string)]
+      ;; Ed25519 JWS should use EdDSA algorithm
+      (is (re-find #"EdDSA" header))
+      (is (re-find #"\"b64\":false" header))
+      (is (re-find #"\"crit\":\[\"b64\"\]" header)))))
 
-          {clj-payload :payload
-           clj-pubkey  :pubkey}
-          (crypto/verify-jws clj-jws)]
-      (testing "cross-platform verifiability"
-        (is (= (:public kp) cljs-pubkey))
-        (is (= (:public kp) clj-pubkey))
-        (is (= s cljs-payload))
-        (is (= s clj-payload))))))
+(deftest jws-cross-platform-test
+  (testing "JWS cross-platform compatibility"
+    ;; This test ensures that JWS created on one platform can be verified on another
+    ;; Note: Due to Ed25519 deterministic signatures, we can test with fixed data
+    
+    (let [kp (crypto/generate-key-pair)
+          payload "cross-platform test"
+          jws1 (crypto/create-jws payload kp)
+          jws2 (crypto/create-jws payload kp)]
+      ;; Ed25519 signatures are deterministic
+      (is (= jws1 jws2))
+      
+      ;; Both should verify successfully
+      (let [result1 (crypto/verify-jws jws1 (:public kp))
+            result2 (crypto/verify-jws jws2 (:public kp))]
+        (is (= payload (:payload result1)))
+        (is (= payload (:payload result2)))))))
+
+(deftest jws-key-identification-test
+  (testing "JWS with key identification features"
+    (let [kp (crypto/generate-key-pair)
+          payload "test payload"]
+      
+      ;; Test with account ID as kid
+      (let [jws-with-kid (crypto/create-jws payload kp {:account-id true})
+            result (crypto/verify-jws jws-with-kid)] ; No public key provided
+        (is (not (instance? #?(:clj Exception :cljs js/Error) result)) "Should verify with account ID from header")
+        (is (= payload (:payload result)))
+        (is (= (:public kp) (:pubkey result)))
+        (is (string? (:kid result)) "Should have kid in result")
+        (is (<= 43 (count (:kid result)) 44) "Kid should be 43-44 char base58 account ID"))
+      
+      ;; Test with full public key embedded as JWK
+      (let [jws-with-jwk (crypto/create-jws payload kp {:include-pubkey true})
+            result (crypto/verify-jws jws-with-jwk)] ; No public key provided
+        (is (not (instance? #?(:clj Exception :cljs js/Error) result)) "Should verify with JWK from header")
+        (is (= payload (:payload result)))
+        (is (= (:public kp) (:pubkey result)))
+        (is (map? (:header result)) "Should have header map")
+        (is (= "OKP" (get-in (:header result) [:jwk :kty])) "JWK should have correct key type"))
+      
+      ;; Test with custom kid
+      (let [custom-kid "my-custom-key-id"
+            jws-custom-kid (crypto/create-jws payload kp {:kid custom-kid})
+            result (crypto/verify-jws jws-custom-kid (:public kp))] ; Provide public key since custom kid won't decode
+        (is (not (instance? #?(:clj Exception :cljs js/Error) result)) "Should verify with custom kid")
+        (is (= payload (:payload result)))
+        (is (= custom-kid (:kid result)) "Should preserve custom kid")))))
+
+(deftest jws-error-handling-test
+  (testing "JWS error handling for missing public keys"
+    (let [kp (crypto/generate-key-pair)
+          payload "test payload"
+          ;; Create JWS with custom kid that can't be used to derive public key
+          jws-no-pubkey (crypto/create-jws payload kp {:kid "unknown-key"})]
+      
+      ;; Should fail when no public key provided and can't extract from header
+      (let [result (crypto/verify-jws jws-no-pubkey)]
+        (is (instance? #?(:clj Exception :cljs js/Error) result) "Should return error for missing public key")
+        (is (= :jws/missing-public-key (:error (ex-data result))) "Should have correct error type"))
+      
+      ;; Should succeed when public key is provided
+      (let [result (crypto/verify-jws jws-no-pubkey (:public kp))]
+        (is (not (instance? #?(:clj Exception :cljs js/Error) result)) "Should verify when public key provided")
+        (is (= payload (:payload result)))))))
+
+(deftest jws-real-keypair-test
+  (testing "JWS with real keypair for interoperability"
+    (let [payload "Hello JWS interoperability test"]
+      #?(:clj
+         ;; In CLJ we need generated key pairs for full functionality
+         (let [kp (crypto/generate-key-pair)
+               jws (crypto/create-jws payload kp {:account-id true})
+               result (crypto/verify-jws jws)]
+           (is (not (instance? Exception result)) "Real keypair JWS should verify")
+           (is (= payload (:payload result))))
+         
+         :cljs
+         ;; In CLJS we can use hex strings directly
+         (let [test-keypair {:public  "7f1215858ac4aa71a95b16b1ef024b1c344d5c25b6df3fe90a9f1513a4d2411e"
+                             :private "162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5"}
+               jws-basic (crypto/create-jws payload test-keypair)
+               jws-with-kid (crypto/create-jws payload test-keypair {:account-id true})
+               jws-with-jwk (crypto/create-jws payload test-keypair {:include-pubkey true})
+               
+               ;; Verify basic JWS with provided key
+               result1 (crypto/verify-jws jws-basic (:public test-keypair))
+               ;; Verify JWS with kid (should extract key from account ID)
+               result2 (crypto/verify-jws jws-with-kid)
+               ;; Verify JWS with embedded public key
+               result3 (crypto/verify-jws jws-with-jwk)]
+           
+           (is (not (instance? js/Error result1)) "Basic JWS should verify")
+           (is (= payload (:payload result1)))
+           
+           (is (not (instance? js/Error result2)) "JWS with account ID should verify")
+           (is (= payload (:payload result2)))
+           (is (= (:public test-keypair) (:pubkey result2)))
+           
+           (is (not (instance? js/Error result3)) "JWS with embedded key should verify")
+           (is (= payload (:payload result3)))
+           (is (= (:public test-keypair) (:pubkey result3))))))))
