@@ -224,7 +224,7 @@
              seed)))
 
 (defn ^:export create-jws
-  "Create a JWS (JSON Web Signature) using Ed25519 with optional public key identification.
+  "Create a JWS (JSON Web Signature) using Ed25519 with public key included by default.
   
   Returns a JWS string in compact format.
   
@@ -234,50 +234,53 @@
   - opts (optional): map with key identification options:
     - :kid - Custom key identifier (string)
     - :account-id - Include account ID as kid (boolean, public key will be derived if needed)
-    - :include-pubkey - Include full public key as JWK (boolean, public key will be derived if needed)
+    - :include-pubkey - Include full public key as JWK (boolean, defaults to true unless explicitly set to false)
     - :jwk - Custom JSON Web Key object
   
   Examples:
-    Basic JWS with hex private key:
+    Basic JWS with public key included (default):
       (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\")
     
-    With account ID as key identifier (works with private key hex):
-      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:account-id true})
+    With key pair map (uses public key from map):
+      (create-jws \"payload\" {:private \"162259eb...\" :public \"a1b2c3...\"})
     
-    With full public key embedded (works with private key hex):
-      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:include-pubkey true})
+    Without public key in header:
+      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:include-pubkey false})
+    
+    With account ID as key identifier:
+      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:account-id true})
     
     With custom key ID:
       (create-jws \"payload\" private-key-hex {:kid \"my-key-1\"})"
-  ([payload signing-key] (create-jws payload signing-key {}))
+  ([payload signing-key]
+   (create-jws payload signing-key {}))
   ([payload signing-key opts]
    (jws/serialize-jws payload signing-key opts)))
 
 (defn ^:export verify-jws
   "Verify a JWS (JSON Web Signature) using Ed25519. Can provide public key or extract from JWS header.
   
-  Returns result map if valid, or Exception object if verification fails.
+  Returns result map if valid, throws exception if verification fails.
   
   Parameters:
   - jws: JWS string in compact format
   - public-key (optional): Ed25519 public key. If nil, will try to extract from JWS header
   
   Returns on success: {:payload payload :pubkey pubkey :header header-map :kid kid-if-present}
-  Returns on error: Exception with details
+  Throws on error: Exception with details
   
   Examples:
     With provided public key:
       (let [result (verify-jws jws-string pubkey)]
-        (if (instance? Exception result)
-          (handle-error result)
-          (use-payload (:payload result))))
+        (use-payload (:payload result)))
     
     Extract public key from JWS header (requires kid or jwk in header):
       (let [result (verify-jws jws-string)]
-        (if (instance? Exception result)
-          (handle-error result)
-          (do (println \"Verified with key:\" (:kid result))
-              (use-payload (:payload result)))))"
+        (println \"Verified with key:\" (:kid result))
+        (use-payload (:payload result)))"
   ([jws] (verify-jws jws nil))
   ([jws public-key]
-   (jws/verify jws public-key)))
+   (let [result (jws/verify jws public-key)]
+     (if (instance? #?(:clj Exception :cljs js/Error) result)
+       (throw result)
+       result))))

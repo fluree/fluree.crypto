@@ -1,16 +1,14 @@
 (ns fluree.crypto-test
   (:require
-    #?@(:clj  [[clojure.test :refer [deftest is testing]]]
-        :cljs [[cljs.test :refer-macros [deftest is testing]]])
-    [fluree.crypto.test-utils :refer [random-string]]
-    [fluree.crypto :as crypto]))
-
+   #?@(:clj  [[clojure.test :refer [deftest is testing]]]
+       :cljs [[cljs.test :refer-macros [deftest is testing]]])
+   [fluree.crypto.test-utils :refer [random-string]]
+   [fluree.crypto :as crypto]))
 
 (def composed-decomposed-map
   {(str "\u00C5") (str "\u0041\u030a")
    (str "\u212B") (str "\u0041\u030a")
    (str "\u00e9") (str "\u0065\u0301")})
-
 
 (deftest normalize-string-test
   (testing "Normalize string test"

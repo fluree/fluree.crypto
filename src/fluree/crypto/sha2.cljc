@@ -19,12 +19,10 @@
     #?(:clj  (.digest digest ba)
        :cljs (.digest digest))))
 
-
 (defn ^:export sha2-256
   "Create a sha2 hash from byte-array."
   [ba]
   (hash ba 256))
-
 
 (defn ^:export sha2-512
   "Create a sha2 hash from byte-array."
