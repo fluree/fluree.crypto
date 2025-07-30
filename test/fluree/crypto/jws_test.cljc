@@ -75,7 +75,7 @@
         (is (<= 43 (count (:kid result)) 44) "Kid should be 43-44 char base58 account ID"))
 
       ;; Test with full public key embedded as JWK
-      (let [jws-with-jwk (crypto/create-jws payload kp {:include-pubkey true})
+      (let [jws-with-jwk (crypto/create-jws payload kp {:include-pubkey? true})
             result (crypto/verify-jws jws-with-jwk)] ; No public key provided
         (is (not (instance? #?(:clj Exception :cljs js/Error) result)) "Should verify with JWK from header")
         (is (= payload (:payload result)))
@@ -96,7 +96,7 @@
     (let [kp (crypto/generate-key-pair)
           payload "test payload"
           ;; Create JWS with custom kid that can't be used to derive public key and no pubkey
-          jws-no-pubkey (crypto/create-jws payload kp {:kid "unknown-key" :include-pubkey false})]
+          jws-no-pubkey (crypto/create-jws payload kp {:kid "unknown-key" :include-pubkey? false})]
 
       ;; Should fail when no public key provided and can't extract from header
       (is (thrown-with-msg? #?(:clj Exception :cljs js/Error)
@@ -125,7 +125,7 @@
                              :private "162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5"}
                jws-basic (crypto/create-jws payload test-keypair)
                jws-with-kid (crypto/create-jws payload test-keypair {:account-id true})
-               jws-with-jwk (crypto/create-jws payload test-keypair {:include-pubkey true})
+               jws-with-jwk (crypto/create-jws payload test-keypair {:include-pubkey? true})
 
                ;; Verify basic JWS with provided key
                result1 (crypto/verify-jws jws-basic (:public test-keypair))

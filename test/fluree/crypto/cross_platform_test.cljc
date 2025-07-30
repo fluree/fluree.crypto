@@ -50,7 +50,7 @@
     #?(:cljs
        ;; In CLJS, test against expected values
        (doseq [payload (take 3 test-payloads)] ; Test first 3 payloads
-         (let [jws (crypto/create-jws payload test-keypair {:include-pubkey false})
+         (let [jws (crypto/create-jws payload test-keypair {:include-pubkey? false})
                expected (get expected-jws-tokens payload)]
            (when expected
              (is (= expected jws)
@@ -66,8 +66,8 @@
        ;; In CLJ, test determinism and verification
        (let [kp (get-test-keypair)]
          (doseq [payload (take 3 test-payloads)]
-           (let [jws1 (crypto/create-jws payload kp {:include-pubkey false})
-                 jws2 (crypto/create-jws payload kp {:include-pubkey false})]
+           (let [jws1 (crypto/create-jws payload kp {:include-pubkey? false})
+                 jws2 (crypto/create-jws payload kp {:include-pubkey? false})]
              (is (= jws1 jws2) "JWS creation should be deterministic in CLJ")
 
              ;; Verify the JWS is valid
@@ -105,7 +105,7 @@
     ;; Test platform-specific JWS creation with key identification
       #?(:cljs
          (let [jws-with-kid (crypto/create-jws "test" test-keypair {:account-id true})
-               jws-with-jwk (crypto/create-jws "test" test-keypair {:include-pubkey true})]
+               jws-with-jwk (crypto/create-jws "test" test-keypair {:include-pubkey? true})]
 
          ;; These should verify without providing public key
            (let [result1 (crypto/verify-jws jws-with-kid)
@@ -121,7 +121,7 @@
          :clj
          (let [kp (get-test-keypair)
                jws-with-kid (crypto/create-jws "test" kp {:account-id true})
-               jws-with-jwk (crypto/create-jws "test" kp {:include-pubkey true})]
+               jws-with-jwk (crypto/create-jws "test" kp {:include-pubkey? true})]
 
          ;; These should verify without providing public key
            (let [result1 (crypto/verify-jws jws-with-kid)

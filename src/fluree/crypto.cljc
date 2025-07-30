@@ -234,7 +234,7 @@
   - opts (optional): map with key identification options:
     - :kid - Custom key identifier (string)
     - :account-id - Include account ID as kid (boolean, public key will be derived if needed)
-    - :include-pubkey - Include full public key as JWK (boolean, defaults to true unless explicitly set to false)
+    - :include-pubkey? - Include full public key as JWK (boolean, defaults to true)
     - :jwk - Custom JSON Web Key object
   
   Examples:
@@ -245,7 +245,7 @@
       (create-jws \"payload\" {:private \"162259eb...\" :public \"a1b2c3...\"})
     
     Without public key in header:
-      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:include-pubkey false})
+      (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:include-pubkey? false})
     
     With account ID as key identifier:
       (create-jws \"payload\" \"162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5\" {:account-id true})
@@ -280,7 +280,4 @@
         (use-payload (:payload result)))"
   ([jws] (verify-jws jws nil))
   ([jws public-key]
-   (let [result (jws/verify jws public-key)]
-     (if (instance? #?(:clj Exception :cljs js/Error) result)
-       (throw result)
-       result))))
+   (jws/verify jws public-key)))
