@@ -6,7 +6,6 @@
             [fluree.crypto :as crypto]
             [alphabase.core :as alphabase]))
 
-
 (deftest account-id-cross-platform-test
   (testing "Account IDs are identical across platforms for known public keys"
     (let [test-keys ["d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
@@ -16,7 +15,7 @@
           expected-ids ["FVen3X669xLzsi6N2V91DoiyzHzg1uAgqiT8jZ9nS96Z"
                         "586Z7H2vpX9qNhN2T4e9Utugie3ogjbxzGaMtM3E6HR5"
                         "Hyx62wPQGyvXCoihZq1BrbUjBRh2LuNxWiiqMkfAuSZr"]]
-      
+
       (doseq [[public-key expected-id] (map vector test-keys expected-ids)]
         (let [account-id (crypto/account-id-from-public public-key)]
           (is (= expected-id account-id)
@@ -84,7 +83,7 @@
       ;; Test that keys are properly hex encoded
       (is (re-matches #"[0-9a-f]{64}" (:private kp)) "Private key should be 64 lowercase hex chars")
       (is (re-matches #"[0-9a-f]{64}" (:public kp)) "Public key should be 64 lowercase hex chars")
-      
+
       ;; Test signature hex encoding
       (let [sig (crypto/sign-message "test" kp)]
         (is (re-matches #"[0-9a-f]{128}" sig) "Signature should be 128 lowercase hex chars")))))
@@ -98,16 +97,16 @@
       ;; Wrong key
       (let [result1 (crypto/verify-signature kp2 message sig1)]
         (is (false? result1) "Signature from different key should not verify"))
-      
+
       ;; Modified signature
       (let [modified-sig (str (subs sig1 0 127) (if (= (last sig1) \0) "1" "0"))
             result2 (crypto/verify-signature kp1 message modified-sig)]
         (is (false? result2) "Modified signature should not verify"))
-      
+
       ;; Wrong message
       (let [result3 (crypto/verify-signature kp1 "wrong message" sig1)]
         (is (false? result3) "Wrong message should not verify"))
-      
+
       ;; Invalid signature format
       (let [result4 (crypto/verify-signature kp1 message "invalid")
             result5 (crypto/verify-signature kp1 message (apply str (repeat 128 "g")))]
@@ -121,12 +120,12 @@
     :public "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
     :message ""
     :signature "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"}
-   
+
    {:name "RFC Test 2 - Single byte"
     :public "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c"
     :message "72"
     :signature "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00"}
-   
+
    {:name "RFC Test 3 - Two bytes"
     :public "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025"
     :message "af82"
@@ -137,7 +136,7 @@
     (doseq [{:keys [name public message signature]} rfc8032-test-vectors]
       (testing name
         (let [msg-bytes (if (empty? message) #?(:clj (byte-array 0) :cljs #js []) (alphabase/hex->bytes message))
-              result (try 
+              result (try
                        (crypto/verify-signature public msg-bytes signature)
                        (catch #?(:clj Exception :cljs js/Error) _ false))]
           (is (true? result) (str name " - should verify with RFC test vector")))))))
@@ -147,8 +146,8 @@
     (let [kp (crypto/generate-key-pair)]
       ;; Test with various edge case messages
       (doseq [test-case [{:name "All zero bytes" :data #?(:clj (byte-array 32) :cljs (js/Uint8Array. 32))}
-                        {:name "All 0xFF bytes" :data #?(:clj (byte-array (repeat 32 -1)) :cljs (js/Uint8Array. (repeat 32 255)))}
-                        {:name "Single bit set" :data #?(:clj (byte-array (cons 1 (repeat 31 0))) :cljs (js/Uint8Array. (cons 1 (repeat 31 0))))}]]
+                         {:name "All 0xFF bytes" :data #?(:clj (byte-array (repeat 32 -1)) :cljs (js/Uint8Array. (repeat 32 255)))}
+                         {:name "Single bit set" :data #?(:clj (byte-array (cons 1 (repeat 31 0))) :cljs (js/Uint8Array. (cons 1 (repeat 31 0))))}]]
         (let [{:keys [name data]} test-case
               signature (crypto/sign-message data kp)
               valid? (crypto/verify-signature kp data signature)]
@@ -167,7 +166,7 @@
            (is (re-matches #"[0-9a-f]{128}" signature) "Signature should be lowercase hex"))
          :cljs
          (let [test-keypair {:public  "7f1215858ac4aa71a95b16b1ef024b1c344d5c25b6df3fe90a9f1513a4d2411e"
-                            :private "162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5"}
+                             :private "162259eb44ebceca49e00bcc95496a2eeba5528886414859c95a3ee045cbd1f5"}
                ;; In CLJS we can use hex strings directly
                signature (crypto/sign-message test-payload (:private test-keypair))
                verified? (crypto/verify-signature (:public test-keypair) test-payload signature)
@@ -177,7 +176,7 @@
            (is (re-matches #"[0-9a-f]{128}" signature) "Signature should be lowercase hex")
            (is (= 44 (count account-id)) "Account ID should be 44 chars (base58)")
            (is (string? account-id) "Account ID should be a string")
-           
+
            ;; Test that we get consistent account ID
            (let [account-id2 (crypto/account-id-from-public (:public test-keypair))]
              (is (= account-id account-id2) "Account ID should be deterministic")))))))

@@ -33,10 +33,8 @@
 
 (defn ^:export verify-jws
   [jws public-key]
-  (let [result (fc/verify-jws (str jws) (if public-key (str public-key) nil))]
-    (if (instance? js/Error result)
-      result
-      (clj->js result))))
+  ;; fc/verify-jws now throws exceptions instead of returning them
+  (clj->js (fc/verify-jws (str jws) (str public-key))))
 
 (defn ^:export sign-message
   [message private-key]
@@ -48,9 +46,16 @@
 
 (defn ^:export create-jws
   ([payload signing-key]
-   (fc/create-jws (str payload) (str signing-key)))
+   (fc/create-jws (str payload)
+                  (if (string? signing-key)
+                    signing-key
+                    (js->clj signing-key :keywordize-keys true))))
   ([payload signing-key opts]
-   (fc/create-jws (str payload) (str signing-key) (js->clj opts :keywordize-keys true))))
+   (fc/create-jws (str payload)
+                  (if (string? signing-key)
+                    signing-key
+                    (js->clj signing-key :keywordize-keys true))
+                  (js->clj opts :keywordize-keys true))))
 
 (def ^:export exports
   #js {:normalizeString      fc/normalize-string

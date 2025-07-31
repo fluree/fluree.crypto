@@ -22,8 +22,8 @@
 #?(:cljs
    (do
      ;; Set up SHA-512 for synchronous operations
-     (set! (.-sha512Sync (.-etc noble-ed25519)) 
-           (fn [& messages] 
+     (set! (.-sha512Sync (.-etc noble-ed25519))
+           (fn [& messages]
              (sha512 (.apply (.-concatBytes (.-etc noble-ed25519)) nil (to-array messages)))))))
 
 ;; Helper functions
@@ -71,15 +71,15 @@
      (let [raw-private-key (alphabase/hex->bytes private-hex)
            ;; Override SecureRandom to provide our private key
            rigged-random (proxy [SecureRandom] []
-                          (nextBytes [^bytes bytes]
-                            (System/arraycopy raw-private-key 0 bytes 0 (alength ^bytes raw-private-key))))
+                           (nextBytes [^bytes bytes]
+                             (System/arraycopy raw-private-key 0 bytes 0 (alength ^bytes raw-private-key))))
            kpg (doto (KeyPairGenerator/getInstance "Ed25519")
                  (.initialize (NamedParameterSpec/ED25519) rigged-random))
            key-pair (.generateKeyPair kpg)
            public-encoded (.getEncoded (.getPublic key-pair))
            ;; Extract raw 32 bytes from DER encoding (last 32 bytes)
-           public-bytes (java.util.Arrays/copyOfRange public-encoded 
-                                                      (- (alength public-encoded) 32) 
+           public-bytes (java.util.Arrays/copyOfRange public-encoded
+                                                      (- (alength public-encoded) 32)
                                                       (alength public-encoded))]
        (alphabase/bytes->hex public-bytes))))
 
@@ -95,12 +95,12 @@
     ;; If it's already a key pair, return the public key
     (and (map? private-key) (:public private-key))
     (:public private-key)
-    
+
     ;; If it's a hex string, derive the public key
     (string? private-key)
     #?(:clj  (derive-public-key-from-private private-key)
        :cljs (alphabase/bytes->hex (js/Array.from (noble-ed25519/getPublicKey (->js-bytes (alphabase/hex->bytes private-key))))))
-    
+
     :else
     (throw (ex-info "Invalid private key format" {:private-key (type private-key)}))))
 
@@ -142,20 +142,20 @@
                        :cljs (->js-bytes message)))]
     #?(:clj  (let [^PrivateKey key-obj (cond
                                              ;; If it's a key pair map with internal object
-                                             (and (map? private-key) (:_private-obj private-key))
-                                             (:_private-obj private-key)
-                                             
+                                         (and (map? private-key) (:_private-obj private-key))
+                                         (:_private-obj private-key)
+
                                              ;; If it's a hex string, create private key object (Java 17+)
-                                             (string? private-key)
-                                             (hex->private-key private-key)
-                                             
+                                         (string? private-key)
+                                         (hex->private-key private-key)
+
                                              ;; If it's a map with :private key
-                                             (and (map? private-key) (:private private-key))
-                                             (hex->private-key (:private private-key))
-                                             
-                                             :else
-                                             (throw (ex-info "Invalid private key format for Clojure Ed25519" 
-                                                            {:private-key (type private-key)})))
+                                         (and (map? private-key) (:private private-key))
+                                         (hex->private-key (:private private-key))
+
+                                         :else
+                                         (throw (ex-info "Invalid private key format for Clojure Ed25519"
+                                                         {:private-key (type private-key)})))
                    ^Signature signature-obj (doto (Signature/getInstance "Ed25519")
                                               (.initSign key-obj))
                    _ (.update signature-obj ^bytes msg-bytes)
@@ -189,18 +189,18 @@
                                           ;; If it's a key pair map with internal object
                                           (and (map? public-key) (:_public-obj public-key))
                                           (:_public-obj public-key)
-                                          
+
                                           ;; If it's a hex string, create public key object
                                           (string? public-key)
                                           (hex->public-key public-key)
-                                          
+
                                           ;; If it's a map with :public key
                                           (and (map? public-key) (:public public-key))
                                           (hex->public-key (:public public-key))
-                                          
+
                                           :else
-                                          (throw (ex-info "Invalid public key format for Clojure Ed25519" 
-                                                         {:public-key (type public-key)})))
+                                          (throw (ex-info "Invalid public key format for Clojure Ed25519"
+                                                          {:public-key (type public-key)})))
                      ^Signature signature-obj (doto (Signature/getInstance "Ed25519")
                                                 (.initVerify key-obj))
                      _ (.update signature-obj ^bytes msg-bytes)]

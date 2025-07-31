@@ -8,13 +8,11 @@
    :output-to        "out/nodejs-test/node-tests.js"
    :autorun          true
    :compiler-options {:infer-externs true ; prevents "could not infer" compiler warnings
-                      :optimizations :simple
-                      :externs       ["sjcl-externs.js"]}}
+                      :optimizations :simple}}
 
   :cljs-browser-test ; runs the cljs tests in the browser via karma
   {:target           :karma
    :compiler-options {:infer-externs true
-                      :externs       ["sjcl-externs.js"]
                       :pseudo-names  true}
    :output-to        "out/browser-test/browser-tests.js"}
 
@@ -47,8 +45,7 @@
   {:target           :esm
    :output-dir       "out/browser/"
    :build-hooks      [(shadow.cljs.build-report/hook)]
-   :compiler-options {:infer-externs true
-                      :externs       ["sjcl-externs.js"]}
+   :compiler-options {:infer-externs true}
    :modules          {:fluree-crypto
                       {:exports
                        ;; wish we didn't have to repeat this here, but we do
